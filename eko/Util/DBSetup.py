@@ -13,9 +13,9 @@ import tempfile
 import shutil
 
 
-CFG_ROOT = "/tmp/eko"
+CFG_ROOT = "/etc/eko"
 
-logger = logging.getLogger('eko.dbutil')
+logger = logging.getLogger('eko.dbsetup')
 
 CREATE_FILELIST_TBL = """
 CREATE TABLE IF NOT EXISTS filelist (id INTEGER PRIMARY KEY, filename VARCHAR, 

@@ -32,3 +32,7 @@ setup.py
 app.yaml
 *.lst
 *.zip
+eko/ThirdParty
+scripts/startup.sh
+
+testpopen.hung.py

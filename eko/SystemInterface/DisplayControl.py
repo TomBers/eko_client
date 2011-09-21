@@ -5,6 +5,9 @@ import time
 import sys
 import logging
 import os
+
+import eko.SystemInterface.OSTools as OSTools
+
 #define constants for MCP23008 GPIO pin masks
 
 GPIO_LED_ERR_NET = 0x80
@@ -37,7 +40,7 @@ class DisplayController( object ):
 		# check if chip is initialised
 		try:
 			ret, err = self._send_i2cget_read(2, MCP23008_DEFAULT_ADDR, MCP23008_IODIR)
-		except:
+		except TypeError:
 			logger.exception("Error calling i2cget.")
 			return False
 		if err:
@@ -74,7 +77,7 @@ class DisplayController( object ):
 			args.insert(2, '-m')
 			args.insert(3, i2c_mask)
 		
-		return self.polling_popen(args, 5.0)
+		return OSTools.polling_popen(args, 5.0)
 	
 	def _send_i2cget_read(self, port, chipadr, register):
 		i2c_chip = '0x%02x' % int(chipadr)
@@ -82,36 +85,8 @@ class DisplayController( object ):
 		args = ['i2cget', '-y', str(port), i2c_chip, i2c_register]
 		
 		# process open
-		return self.polling_popen(args, 5.0)
+		return OSTools.polling_popen(args, 5.0)
 	
-	def polling_popen(self, args, timeout = 1.0):
-		"""Calls a app and waits till it returns or times out"""
-		logger.info('Calling %s: %s.' % (args[0], ''.join(['%s ' % str(x) for x in args])))
-		try:
-			proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		except:
-			logger.exception("An error occured while executing args: %s" % str(args))
-			return False
-		
-		strt = time.time()
-		
-		# a loop waiting for i2cset to return, exists if a timeout occurs
-		while True:
-			if proc is not None:
-				break;
-			if (time.time() - strt) > 5.0:
-				logger.warn('%s timeout. call = %s' (args[0], str(args)))
-				break;
-			time.sleep(0.1)
-		if proc is not None:
-			(retbyte, err) = proc.communicate()
-			if err:
-				logger.error('%s failure: \n%s.' % (args[0], err))
-			if retbyte:
-				logger.debug('%s call complete, returned: %s.' % (args[0], retbyte))
-			return (retbyte, err)
-		else:
-			return False
 	
 	def init_leds(self):
 		""" Initialise the MCP23008 as per EKO baseboard V2 specification"""

@@ -1,0 +1,18 @@
+#! /bin/sh
+# /etc/init.d/setup_eko_bbxm
+#
+
+# Some things that run always
+
+# disable DVI
+echo 0 > /sys/devices/platform/omapdss/display0/enabled 
+echo 0 > /sys/devices/platform/omapdss/display1/enabled 
+
+# create ppp device node
+mknod /dev/ppp c 108 0
+
+# mount debugfs
+mkdir -p /debug
+mount -t debugfs debugfs /debug
+
+exit 0

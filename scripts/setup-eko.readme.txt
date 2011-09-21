@@ -1,0 +1,189 @@
+Stage 1 Setup Instructions
+===========================
+
+Repeat on both boards!
+
+Step 1:
+------
+
+Modifications to u-boot environment:
+
+Attached is a file uEnv.txt. You may upload this file directly the the beagleboard at runtime.
+This file adds the beagleboards dieId (unique cpu id) to the kernel command line
+
+# backup existing
+cp /media/mmcblk0p1/uEnv.txt /home/root/backup_setup/uEnv.txt.old
+# from your laptop, over SSH
+scp uEnv.txt.new root@192.168.1.2:/media/mmcblk0p1/uEnv.txt
+
+Then reboot the device using reboot over serial/ssh.
+
+After reboot verify that the install was a success by
+# over ssh
+cat /proc/cmdline >> test.txt
+nano text.txt
+
+you should see something like
+
+console=ttyS2,115200n8 mem=80M@0x80000000 mem=384M@0x88000000 mpurate=1000 buddy=zippy2 
+vram=16M omapfb.vram=0:8M,1:4M,2:4M omapfb.mode=dvi:hd720 omapdss.def_disp=dvi root=/dev/mmcblk0p2 rw 
+rootfstype=ext2 rootwait dieid=2c6400211ff00000015739eb0c01002d
+
+the dieid is important!! Copy this to a notepad window alongside the device name. Keep seperate files for each datalogger.
+
+Step 2:
+------
+
+Setup of hostname. If not configured already, each datalogger should be given a unique hostname.
+Over SSH.
+
+cat /etc/hostname
+
+hostname should be changed to something like. eko-bugesera, bugesera or logger-bugesera or whatever you please.
+just keep them consistent
+
+eg:
+nano /etc/hostname
+delete everything
+replace with logger-bugesera
+
+cat /etc/hostname
+logger-bugesera
+
+next change /etc/hosts
+to read as follows (change logger-bugesera to match your naming)
+
+127.0.0.1	localhost.localdomain           localhost
+127.0.0.1	logger-bugesera.eko             logger-bugesera
+
+add the hostname to the textfile you used for dieid.
+
+Step 3:
+------
+
+Push setup_eko_bbxm to the beagleboard directory /etc/init.d
+
+scp setup_eko_bbxm root@192.168.1.2:/etc/init.d/
+
+on the beagleboard
+chmod 755 /etc/init.d/setup_eko_bbxm
+
+add setup_eko_bbxm to execute on runlevel 3.
+on the bbxm
+
+first backup inittab
+cp /etc/inittab /home/root/backp_setup/inittab.bk.1
+
+then:
+echo e5:3:wait:/etc/init.d/setup_eko_bbxm >> /etc/inittab 
+
+verify: cat /etc/inittab, and see new line at end
+
+Step 4:
+------
+
+Setup pppd to redial on dropped connection
+
+in /etc/ppp/peers/he220
+
+add the lines
+
+persist
+holdoff 60
+
+to the very end.
+
+
+Step 5:
+------
+
+Install the required dependencies.
+connect to the internet with pppd.
+pppd call he220
+
+Then run the following:
+#!/bin/sh
+
+opkg update
+opkg install ntpdate
+opkg install python-pycrypto
+
+ntpdate -t 60 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org
+
+then hwclock should return the current date/time in UTC
+
+kill pppd with SIGTERM
+killall -15 pppd
+
+Step 6
+------
+
+Install modbus_tk and poster globally.
+http://atlee.ca/software/poster/dist/0.8.1/poster-0.8.1.tar.gz
+http://modbus-tk.googlecode.com/files/modbus-tk-0.4.1.zip
+
+extract modbus_tk and poster (you can instead move the copy of modbus_tk you already have downloaded)
+poster is attached to this email.
+
+then move recursive to the bbxm over scp
+
+scp -r ~/Downloads/modbus-tk-0.4.1/modbus_tk root@192.168.1.2:/usr/lib/python2.6/
+scp -r ~/Downloads/poster-0.8.1/poster root@192.168.1.2:/usr/lib/python2.6/
+
+cd /
+python
+>> import modbus_tk
+>> import poster
+
+should execute without eror.
+
+Step 7
+-----
+
+Generate RSA public/private keys.
+
+scp the keygen directory.
+scp -r ~/Downloads/keygen root@192.168.1.2:/home/root/
+
+on the bbxm
+mkdir /etc/eko
+mkdir /etc/eko/sensors
+
+cd /home/root/keygen
+python eko-keygen.py
+
+it will print something like:
+
+-------------------------------------------------
+Public Key e Parameter
+
+10001
+
+Public key n Parameter
+
+9d1fb9fc360dff2a1865c...........
+--------------------------------------------------
+
+Copy this to the textfile with the dieid.
+
+Step 8
+-----
+
+Finally you must configure the datalogger on the eko webservice.
+
+A super user account has been created for lukas
+lukaslukoschek@ekohub.org (Lukas Lukoschek)
+password: 8DYD=u5D
+
+Use these credentials to log into www.ekohub.org
+then use http://www.ekohub.org/kiosks/register to create records for the two new kiosks
+
+Use the details you saved in notepad. Set the kiosk name to the hostname you specified.
+
+IMPORTANT: DO NOT LOSE THE CONFIGURED DIEID and RSA PUBLIC KEY!!
+Securely backup the e, n parameters and dieid. Super securely backup /etc/eko/prikey.pickle for added safety.
+scp root@192.168.1.2:/etc/eko/prikey.pickle ./
+
+email me the details asked for above.
+
+
