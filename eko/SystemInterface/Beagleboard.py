@@ -3,6 +3,7 @@ import time
 from os.path import exists
 import eko.SystemInterface.OSTools as OSTools
 import logging
+import os
 
 logger = logging.getLogger('eko.SystemInterface.Beagleboard')
 
@@ -35,7 +36,8 @@ def handle_modprobe_ehcihcd(insert=True):
             logger.error("Unable to excecute %s successfuly (%d left)." % (command, retry_count))
     return (ret, err)
 
-def set_gpio_usbhub_power(on=True, revB=False):
+#TODO: CHANGE FOR REVC!!!
+def set_gpio_usbhub_power(on=True, revB=True):
     retry_count = 5
     
     if not revB:
@@ -68,6 +70,12 @@ def turn_on_usbhub():
     
     # check /dev/ttyUSB0
     time.sleep(5)
+    
+    #### REMOVE!
+    #time.sleep(5)
+    #os.popen('usb_modeswitch -v 0x19d2 -p 0x0103 -V 19d2 -P 0x0031 -M 5553424312345679000000000000061b000000020000000000000000000000')
+    #time.sleep(5)
+    
     retry_count = 5
     while retry_count > 0:
         if exists('/dev/ttyUSB0'):
@@ -75,7 +83,7 @@ def turn_on_usbhub():
             break
         else:
             logger.error("Modem still not detected, %d retry attempts left." % retry_count)
-            time.sleep(2)
+            time.sleep(4)
         retry_count -= 1
     
     return exists('/dev/ttyUSB0')

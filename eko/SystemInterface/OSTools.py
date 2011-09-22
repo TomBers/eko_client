@@ -57,39 +57,39 @@ def polling_popen(args, timeout = 1.0):
     # start counting
     strt = time.time()
     
-    if proc:
-        logger.debug("Process spawned with PID %s." % str(proc.pid))
+    logger.debug("Process spawned with PID %s." % str(proc.pid))
     
     # a loop waiting for program to return, exists if a timeout occurs
     while True:
         # if proc return code is None, then process is still running
         if proc.poll() is not None:
             logger.debug("Process %s returned after %d seconds." % (args[0], time.time() - strt))
+            timeout = False
             break
         # check timeout
         if (time.time() - strt) > timeout:
             logger.warn('Process %s timeout. Called with arguments %s.' % (args[0], str(args)))
+            timeout = True
             break
         # sleep 100ms
         time.sleep(0.1)
     
     # check to make sure timeout didnt occur.
-    if proc is not None:
-        if not proc.poll():
-            # Abort
-            logger.error("Hung process: %s, with pid: %s" % (args[0], str(proc.pid)))
-            #proc.kill()
+    if timeout:
+        # Abort
+        logger.error("Hung process: %s, with pid: %s" % (args[0], str(proc.pid)))
+        #proc.kill()
+        try:
             os.kill(proc.pid, signal.SIGTERM)
-            return False
-        (ret, err) = proc.communicate()
-        if err:
-            logger.error('Process %s failure: \n%s.' % (args[0], err))
-        if ret:
-            logger.debug('Process %s call complete, returned: %s.' % (args[0], ret))
-        return (ret, err)
-    else:
-        logger.error('Popen unsuccessful.')
+        except OSError:
+            logger.exception("Unable to kill hung process.")
         return False
+    (ret, err) = proc.communicate()
+    if err:
+        logger.error('Process %s failure: \n%s.' % (args[0], err))
+    if ret:
+        logger.debug('Process %s call complete, returned: %s.' % (args[0], ret))
+    return (ret, err)
 
 def pppd_launch():
     args = ['pppd', 'call', 'three']
@@ -104,6 +104,7 @@ def pppd_launch():
         logger.exception('Unable to launch pppd.')
     
     if pppd:
+        # pppd does a fork exec so the pid returned here doesnt mean anything
         return pppd.pid
     else:
         return 0
@@ -151,10 +152,16 @@ def pppd_terminate(pid, kill=False):
     while pppd_isrunning(pid) and (retrycount > 0):
         if not kill and (retrycount > 2):
             logger.info('sending SIGTERM to pppd (%d)' % pid)
-            os.kill(pid, signal.SIGTERM)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError:
+                logger.exception("Unable to terminate pppd.")
         else:
             logger.info('sending SIGKILL to pppd (%d)' % pid)
-            os.kill(pid, signal.SIGKILL)
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                logger.exception("Unable to kill pppd.")
         time.sleep(2)
         retrycount -= 1
     if pppd_isrunning(pid):

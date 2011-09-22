@@ -8,6 +8,8 @@ import logging
 import sys
 import time
 import signal
+import socket
+import urllib2
 
 from ConfigParser import ConfigParser
 
@@ -20,13 +22,20 @@ import eko.SystemInterface.OSTools as OSTools
 
 import eko.SystemInterface.Beagleboard as Beagleboard
 
+from eko.ThirdParty import ping
+
 VERSION = '2.0'
 
 def handleSIGTERM():
     sys.exit(0)
     
 signal.signal(signal.SIGTERM, handleSIGTERM)
-import time
+
+class InternetConnectionError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class DataLogger(object):
     datadir = '/data'
@@ -46,8 +55,69 @@ class DataLogger(object):
             self.logger.exception("Databases could not be opened.")
         
         self.disp = DisplayController()
+    
+    def _try_network(self):
+        # try ping first
+        try:
+            self.logger.info("Trying ping for google.com.")
+            x = ping.do_one('www.google.com', 10000, 1, 8)
+        except socket.error:
+            self.logger.exception("Ping failed!")
+            x = None
+        google_req = urllib2.Request('http://www.google.com/index.html')
+        try:
+            self.logger.info("Trying url fetch on google.com")
+            x = urllib2.urlopen(google_req, timeout=60)
+        except urllib2.URLError:
+            self.logger.exception("URL Error, unable to reach google.com")
+        # if the ping suceeds and urlfetch fails, x will still be valid
+        return x
+    
+    def ready_internet(self):
         
-    def start(self):
+        self.logger.info("Attempting to connect to the internet.")
+        ## open a pppd instance
+        OSTools.pppd_launch()
+        
+        ## wait for pppd to settle
+        time.sleep(5)
+        
+        retrycount = 5
+        while retrycount > 0:
+            ## to see if ppp is up
+            if OSTools.pppd_status():
+                ## ppp is up, try ping
+                x = self._try_network()
+                if x:
+                    self.disp.control_led('net', True)
+                    self.disp.control_led('neterr', False)
+                    self.logger.info("Ping success.")
+                    return True
+                else:
+                    self.disp.control_led('neterr', True)
+                    self.disp.control_led('net', False)
+                self.logger.info("Sleeping for 10s.")
+                time.sleep(10)
+            else:
+                # ppp is not up
+                ## check if process is running
+                ppp_pid = OSTools.pppd_pid()
+                if ppp_pid == 0:
+                    ## ppp has quit
+                    raise InternetConnectionError('pppd unexpectedly quit!')
+                else:
+                    ## wait 10 seconds, and retry
+                    time.sleep(20)
+            retrycount -= 1
+            self.logger.info("Rechecking network, remaining attempts %d." % retrycount)
+        OSTools.pppd_terminate(OSTools.pppd_pid())
+        return False
+    
+    def stop_internet(self):
+        self.logger.info("Dropping net connection.")
+        return OSTools.pppd_terminate(OSTools.pppd_pid())
+    
+    def sync(self):
         # open a internet connection
         ## power the modem
         self.disp.control_led('all', False)
@@ -62,7 +132,29 @@ class DataLogger(object):
             self.disp.control_led('neterr', True)
         
         ## wait for system to settle
+        time.sleep(10)
+        
+        retrycount = 3
+        while retrycount > 0:
+            try:
+                res = self.ready_internet()
+            except InternetConnectionError:
+                self.logger.exception('Could not dial modem.')
+                return False
+            if res:
+                break;
+            self.logger.info("Waiting 30 seconds till next attempt.")
+            time.sleep(30)
+            retrycount -= 1
+            self.logger.info("%d attempts left." % retrycount)
+        
+        # Assume we have net connectivity by this point.
+        
         time.sleep(30)
+        
+        # terminate network
+        self.stop_internet()
+        time.sleep(5)
         
         ## power off the modem
         try:
@@ -98,7 +190,7 @@ def main():
             logger.info("Executing main code with config %s. Attempt #%d." % (configfile, run_count))
             datalogger = DataLogger(configfile)
             time.sleep(5)
-            datalogger.start()
+            datalogger.sync()
         except KeyboardInterrupt:
             sys.exit(1)
         except:

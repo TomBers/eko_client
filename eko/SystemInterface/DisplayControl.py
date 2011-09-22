@@ -42,7 +42,7 @@ class DisplayController( object ):
 			ret, err = self._send_i2cget_read(2, MCP23008_DEFAULT_ADDR, MCP23008_IODIR)
 		except TypeError:
 			logger.exception("Error calling i2cget.")
-			return False
+			return
 		if err:
 			logger.error('i2cget returned an error: \n%s' % err)
 		if ret:
