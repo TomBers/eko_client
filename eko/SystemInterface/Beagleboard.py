@@ -4,8 +4,24 @@ from os.path import exists
 import eko.SystemInterface.OSTools as OSTools
 import logging
 import os
+import re
 
 logger = logging.getLogger('eko.SystemInterface.Beagleboard')
+
+def get_dieid():
+    # read the kernel command line
+    try:
+        fh = open('/proc/cmdline')
+        cmdline = fh.read()
+        fh.close()
+    except (OSError, IOError):
+        logger.exception("Could not read kernel command line")
+        return "FAILSAFE"
+    a = re.search(r'(dieid=\w+)', cmdline)
+    if a:
+        return a.group().split('=')[1]
+    else:
+        return 'FAILSAFE'
 
 def handle_modprobe_ehcihcd(insert=True):
     if insert:

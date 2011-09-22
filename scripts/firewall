@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Beagleboard XM IPTables
+
+# Drop all inbound
+/usr/sbin/iptables -P INPUT DROP
+
+# Drop all forwarded
+/usr/sbin/iptables -P FORWARD DROP
+
+# Allow all outbound
+/usr/sbin/iptables -P OUTPUT ACCEPT
+
+# Allow localhost traffic
+/usr/sbin/iptables -A INPUT -i lo -j ACCEPT
+
+# Allow usb0 traffic
+/usr/sbin/iptables -A INPUT -i usb0 -j ACCEPT
+
+# Allow all packets established or related
+/usr/sbin/iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# Allow port 80 for web ui [FUTURE?]
+/usr/sbin/iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+
+# Allow SSH
+/usr/sbin/iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+
+# Allow ping
+/usr/sbin/iptables -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT

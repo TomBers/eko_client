@@ -192,7 +192,7 @@ def main():
             time.sleep(5)
             datalogger.sync()
         except KeyboardInterrupt:
-            sys.exit(1)
+            sys.exit(0)
         except:
             run_count += 1;
             if run_count > run_error_threshold:

@@ -34,5 +34,6 @@ app.yaml
 *.zip
 eko/ThirdParty
 scripts/startup.sh
-
+test_data
 testpopen.hung.py
+modbus_tk

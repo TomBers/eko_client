@@ -50,4 +50,4 @@ def HexToByte( hexStr ):
 #-------------------------------------------------------------------------------
 
 def Int16ToHex( intList ):
-	return ''.join( ['0x%02x ' % int(x,10) for x in intList] ).strip()
+	return ''.join( ['0x%04x ' % x for x in intList] ).strip()

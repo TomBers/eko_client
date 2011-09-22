@@ -55,7 +55,7 @@ def check_databases():
 			try:
 				logger.warning('creating new filelist.db')
 				_create_filelist_db(newfile=True)
-			except:
+			except (sqlite3.Error, IOError):
 				logger.exception('failed to create new filelist.db')
 				logger.critical('Database initialisation failure!')
 	except:
@@ -70,7 +70,7 @@ def check_databases():
 			try:
 				logger.warning('creating new sync.db')
 				_create_sync_db(newfile=True)
-			except:
+			except (sqlite3.Error, IOError):
 				logger.exception('failed to create new sync.db')
 				logger.critical('Database initialisation failure!')
 	except:
