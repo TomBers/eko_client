@@ -94,6 +94,25 @@ class DisplayController( object ):
 		self._send_i2cset_write(MCP23008_I2C_PORT, MCP23008_DEFAULT_ADDR, MCP23008_IODIR, 0x00)
 		self._send_i2cset_write(MCP23008_I2C_PORT, MCP23008_DEFAULT_ADDR, MCP23008_GPIO, 0x00)
 	
+	def switch_port_power(self, port_num=0, state=True):
+	    # port 0 : port 1, 2 both on
+	    # port 3 cannot be controlled
+	    if (port_num < 0) or (port_num > 3):
+	        raise ValueError
+	    if port_num == 0:
+	        logger.debug("Switching %s Port 1, 2 power." % ("on" if state else "off"))
+	        self._send_i2cset_write(MCP23008_I2C_PORT, MCP23008_DEFAULT_ADDR, MCP23008_GPIO, 0xFF if state else 0x00, GPIO_EN_PWR_PORT1 | GPIO_EN_PWR_PORT2)
+	    elif port_num == 1:
+	        logger.debug("Switching %s Port 1 power." % ("on" if state else "off"))
+	        self._send_i2cset_write(MCP23008_I2C_PORT, MCP23008_DEFAULT_ADDR, MCP23008_GPIO, 0xFF if state else 0x00, GPIO_EN_PWR_PORT1)
+	    elif port_num == 2:
+	        logger.debug("Switching %s Port 2 power." % ("on" if state else "off"))
+	        self._send_i2cset_write(MCP23008_I2C_PORT, MCP23008_DEFAULT_ADDR, MCP23008_GPIO, 0xFF if state else 0x00, GPIO_EN_PWR_PORT2)
+	    else:
+	        # do nothing on port 3
+	        pass
+	    return
+	    
 	def control_led(self, ledname, state=False):
 		""" Controls a led """
 		

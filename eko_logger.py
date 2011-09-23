@@ -18,6 +18,8 @@ from eko.SystemInterface.DisplayControl import DisplayController
 import eko.Util.LogHelper as LogHelper
 import eko.Util.DBSetup as DBSetup
 
+from eko.Sensors.Dispatcher import EkoDispatcher
+
 import eko.SystemInterface.OSTools as OSTools
 
 import eko.SystemInterface.Beagleboard as Beagleboard
@@ -117,7 +119,16 @@ class DataLogger(object):
         self.logger.info("Dropping net connection.")
         return OSTools.pppd_terminate(OSTools.pppd_pid())
     
-    def sync(self):
+    def datalog(self):
+        # instantiate a harvest dispatcher
+        dispatch = EkoDispatcher()
+        dispatch.import_configs()
+        logger.info("Dispatching all sensor polling operations.")
+        dispatch.dispatch_all()
+        logger.info("All sensors polled.")
+        return
+    
+    def netsync(self):
         # open a internet connection
         ## power the modem
         self.disp.control_led('all', False)

@@ -9,12 +9,13 @@ import tempfile
 
 import eko.Constants as Constants
 
-from eko.Sensors.Harvester import Harvester
-logger = logging.getLogger('eko.HarvestDispatch')
+from eko.Sensors.MobdusInterface import ModbusInterface, SensorConfigException
+
+logger = logging.getLogger('eko.Dispatcher')
 
 
-class HarvestDispatcher(object):
-    """Dispatches harvesters synchronously to collect data from modbus devices"""
+class EkoDispatcher(object):
+    """Dispatches polling calls to sensors synchronously."""
     valid_configs = []
     
     def __init__(self, configpath=Constants.CONFIGPATH, datapath=Constants.DATAPATH, sensorcfgpath=Constants.SENSORPATH):
@@ -41,7 +42,7 @@ class HarvestDispatcher(object):
         path = self.create_harvest_session()
         for config in self.valid_configs:
             try:
-                d = Harvester(config, path)
+                d = ModbusInterface(config, path)
             except:
                 logger.exception("Could not spawn harvester for config: %s and data path: %s.", (config, path))
             try:
