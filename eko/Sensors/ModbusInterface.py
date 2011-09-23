@@ -200,7 +200,7 @@ class Harvester( object ):
             logger.debug("Data: %s." % str(datarow))
             csvw = csv.DictWriter(fh, cols, extrasaction='ignore')
             if self.newfile:
-                headers = {}
+                header = {}
                 for col in cols:
                     header[col] = col
                 csvw.writerow(header)
