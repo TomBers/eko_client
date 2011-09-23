@@ -41,10 +41,10 @@ class EkoDispatcher(object):
         """Dispatch harvesters for all configs"""
         path = self.create_harvest_session()
         for config in self.valid_configs:
-            try:
-                d = ModbusInterface(config, path)
-            except:
+            d = Harvester(config, path)
+            if d is None:
                 logger.exception("Could not spawn harvester for config: %s and data path: %s.", (config, path))
+                return
             try:
                 csv_file = d.harvest()
             except:
