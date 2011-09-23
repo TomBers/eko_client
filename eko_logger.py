@@ -204,7 +204,7 @@ def main():
             logger.info("Executing main code with config %s. Attempt #%d." % (configfile, run_count))
             datalogger = DataLogger(configfile)
             time.sleep(5)
-            datalogger.sync()
+            datalogger.netsync()
         except KeyboardInterrupt:
             sys.exit(0)
         except:

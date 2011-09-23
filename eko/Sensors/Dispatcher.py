@@ -64,7 +64,7 @@ class EkoDispatcher(object):
                 if not x.fetchone():
                     c.execute("insert into filelist (filename) values (?)", (filename,))
                     logger.info("Created sync record for data file %s" % filename)
-                    c.commit()
+                    con.commit()
         except:
             logger.exception("Could not add file to filelist.")
         finally:
