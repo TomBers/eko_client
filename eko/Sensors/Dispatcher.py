@@ -60,7 +60,7 @@ class EkoDispatcher(object):
             con = sqlite3.connect(join(self.configpath, "filelist.db"))
             with con:
                 for filename in filenames:
-                    x = con.execute("select * from filelist where filename = ? and synctime = ?", (filename,None,))
+                    x = con.execute("select * from filelist where filename = ? and synctime is NULL", (filename,))
                     if not x.fetchone():
                         con.execute("insert into filelist (filename) values (?)", (filename,))
                         logger.info("Created sync record for data file %s" % filename)

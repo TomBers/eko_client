@@ -1,5 +1,5 @@
 CONFIGPATH = '/etc/eko/'
 SENSORPATH = '/etc/eko/sensors/'
 DATAPATH = '/data/'
-
+ZIPPATH = '/zipfiles/'
 SENSOR_DEFCONFIG = '/etc/eko/sensor_default.cfg'

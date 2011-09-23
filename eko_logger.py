@@ -128,6 +128,9 @@ class DataLogger(object):
         logger.info("All sensors polled.")
         return
     
+    def upload_data_messages(self):
+        
+    
     def netsync(self):
         # open a internet connection
         ## power the modem

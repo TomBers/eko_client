@@ -30,3 +30,12 @@ def solve_challenge(challenge):
     else:
         return ''
     return sig_encoded
+
+def sign_digest(digest):
+    baseconv = BaseConverter('0123456789abcdef')
+    key = load_RSA()
+    try:
+        return baseconv.from_decimal(key.sign(digest, "")[0])
+    except:
+        logger.exception("Unable to sign MD5 hash digest with 512bit RSA.")
+        return ''
