@@ -2,6 +2,9 @@ import math
 import time
 import struct
 
+import logging
+
+logger = logging.getLogger("eko.Sensors.Processor")
 
 def get_avg(samples):
     x = math.fsum(samples)
@@ -29,3 +32,12 @@ def encode_binary(date, samples, sample_len):
     except struct.error:
         return False
     return bytes+timebyts
+
+def single_value(data):
+    if data is None:
+        return ''
+    if len(data) = 0:
+        return ''
+    if len(data) > 1:
+        logger.warn("Data being discarded!")
+    return str(data[0])

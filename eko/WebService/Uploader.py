@@ -3,7 +3,11 @@ from os.path import join, relpath, isfile, exists
 from zipfile import ZipFile, ZIP_DEFLATED
 from datetime import datetime
 import logging
+
+
 import eko.Constants as Constants
+import eko.SystemInterface.Beagleboard as Beagleboard
+from eko.Util.Security import solve_challenge
 
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
@@ -33,6 +37,7 @@ class DataUploader( object ):
     def build_zip_file(self):
         basename = datetime.utcnow().strftime('%d%b%y-%H%M%S.sync')
         filename = basename+'.zip'
+        manifest = basename+'.lst'
         try:
             zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
             for f in [f[1] for f in self.filelist]:
@@ -46,13 +51,13 @@ class DataUploader( object ):
         except:
             logger.exception("Could not create zip file.")
         try:
-            fh = open(join(self.zippath, basename+'.lst'), 'wb')
+            fh = open(join(self.zippath, manifest), 'wb')
             for f in [f[1] for f in self.filelist]:
                 fh.write('%s\n' % f)
             fh.close()
         except:
             logger.exception("An error occured while trying to write the manifest.")
-        return (join(self.zippath, filename), join(self.zippath, basename+'.lst'))
+        return (join(self.zippath, filename), join(self.zippath, manifest))
     
     def update_filelist(self):
         conn = sqlite3.connect(join(self.configpath, 'filelist.db'))
@@ -65,5 +70,61 @@ class DataUploader( object ):
         conn.commit()
         conn.close()
     
-    def upload_file(self):
+    def upload_file(self, zipfile, manifest):
+        register_openers()
         
+        # create post vars for encoding
+        pvars = {'kiosk-id': Beagleboard.get_dieid(),
+                'software_version': '1.0.0', 'type':'data', 'reference': uuid1().get_hex()}
+        
+        # check to see if zipfile exists
+        if isfile(zipfile):
+            zh = open(zipfile)
+            pvars['payload'] = zh
+        else:
+            zh = None
+        # check to see if manifest exists
+        if isfile(manifest):
+            mf = open(manifest)
+            pvars['manifest'] = mf
+        else:
+            mf = None
+        
+        datagen, headers = multipart_encode(pvars)
+        
+        get_target = urllib2.Request(Constants.URLUploadRequest)
+        
+        try:
+            resp_url = urllib2.urlopen(get_target)
+            url_targ = resp_url.read().strip()
+        except urllib2.URLError:
+            logger.exception("Unable to get upload link.")
+            if zh is not None:
+                zh.close()
+            if mf is not None:
+                mf.close()
+            return False
+        
+        headers['X-eko-challenge'] = resp_url.headers['X-eko-challenge']
+        headers['X-eko-signature'] = solve_challenge(resp_url.headers['X-eko-challenge'])
+        
+        upload = urllib2.Request(url_targ, datagen, headers)
+        try:
+            response = urllib2.urlopen(upload)
+        except:
+            logger.exception("Unable to upload zip file.")
+        # close zip files
+        if zh is not None:
+            zh.close()
+        if mf is not None:
+            mf.close()
+        if response is not None:
+            resp = response.read()
+            if resp == "SUCCESS":
+                logger.info("File upload sucessful!")
+                return False
+            else:
+                logger.error("Message from server %s." % resp)
+                return False
+        else:
+            return False

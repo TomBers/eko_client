@@ -180,6 +180,8 @@ class Harvester( object ):
                 elif op == 'binary':
                     output_value = str(Processor.encode_binary(datetime.utcnow(), output_value, samp_c))
                     files.append(self._append_binaryfile_data(sect, output_value))
+                elif op == 'single':
+                    output_value = Processor.single_value(output_value)
                 else:
                     output_value = str(output_value)
             else:

@@ -7,6 +7,10 @@ import pickle
 import Crypto.PublicKey.RSA as RSA
 import Crypto.Hash.MD5 as MD5
 
+import logging
+
+logger = logging.getLogger('eko.Util.Security')
+
 def load_RSA():
     if exists('/etc/eko/prikey.pickle'):
         fh = open('/etc/eko/prikey.pickle', 'rb')

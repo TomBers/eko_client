@@ -52,6 +52,30 @@ def handle_modprobe_ehcihcd(insert=True):
             logger.error("Unable to excecute %s successfuly (%d left)." % (command, retry_count))
     return (ret, err)
 
+def goto_known_state():
+    # kill pppd
+    pppd_terminate()
+    
+    # call rmmod
+    logger.warn("Cleaning up, removed ehci_hcd.")
+    OSTools.polling_popen(['rmmod', '-f', 'ehci_hcd'], timeout=30.0)
+    
+    # remove power from usb hub
+    set_gpio_usbhub_power(on=False)
+    
+def ehci_hcd_loaded():
+    # open /proc/modules and see if ehci hcd is loaded.
+    fh = open('/proc/modules')
+    mods = []
+    for l in fh:
+        if l is not None:
+            mods.append(l.split()[0])
+    fh.close()
+    if 'ehci_hcd' in mods:
+        return True
+    else:
+        return False
+
 #TODO: CHANGE FOR REVC!!!
 def set_gpio_usbhub_power(on=True, revB=False):
     retry_count = 5
