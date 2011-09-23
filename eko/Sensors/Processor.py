@@ -36,7 +36,7 @@ def encode_binary(date, samples, sample_len):
 def single_value(data):
     if data is None:
         return ''
-    if len(data) = 0:
+    if len(data) == 0:
         return ''
     if len(data) > 1:
         logger.warn("Data being discarded!")

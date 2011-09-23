@@ -17,6 +17,7 @@ from uuid import uuid1
 logger = logging.getLogger('eko.WebService.Uploader')
 
 class DataUploader( object ):
+    filelist = []
     def __init__(self, configpath=Constants.CONFIGPATH, datapath=Constants.DATAPATH, zippath=Constants.ZIPPATH):
         self.configpath = configpath
         self.datapath  = datapath
