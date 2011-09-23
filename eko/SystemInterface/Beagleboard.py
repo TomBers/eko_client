@@ -53,7 +53,7 @@ def handle_modprobe_ehcihcd(insert=True):
     return (ret, err)
 
 #TODO: CHANGE FOR REVC!!!
-def set_gpio_usbhub_power(on=True, revB=True):
+def set_gpio_usbhub_power(on=True, revB=False):
     retry_count = 5
     
     if not revB:
