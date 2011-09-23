@@ -58,16 +58,20 @@ class EkoDispatcher(object):
         """Add file to filelist.db"""
         try:
             con = sqlite3.connect(join(self.configpath, "filelist.db"))
-            with con:
-                for filename in filenames:
-                    x = con.execute("select * from filelist where filename = ? and synctime is NULL", (filename,))
-                    if not x.fetchone():
-                        con.execute("insert into filelist (filename) values (?)", (filename,))
-                        logger.info("Created sync record for data file %s" % filename)
+            c = con.cursor()
+            for filename in filenames:
+                x = c.execute("select * from filelist where filename = ? and synctime is NULL", (filename,))
+                if not x.fetchone():
+                    c.execute("insert into filelist (filename) values (?)", (filename,))
+                    logger.info("Created sync record for data file %s" % filename)
+                    c.commit()
         except:
             logger.exception("Could not add file to filelist.")
         finally:
-            con.close()
+            if c is not None:
+                c.close()
+            if con is not None:
+                con.close()
     
     def create_harvest_session(self):
         """Create folders and lay groundwork for data harvesting"""
