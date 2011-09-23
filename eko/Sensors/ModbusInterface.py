@@ -194,6 +194,16 @@ class Harvester( object ):
             if datarow[key] == False:
                 logger.warn("Error potentially occured in getting data for %s." % sect)
             logger.info("Leaving config section %s." % sect)
+            
+            # sleep if the operation told us to wait
+            if self.config.has_option(sect, 'wait'):
+                try:
+                    wait = self.config.getfloat(sect, 'wait')
+                except ConfigParser.Error:
+                    wait = 5.0
+                logger.info("Sleeping for %.2f seconds." % wait)
+                time.sleep(wait)
+                    
         logger.info("Making data entry in csv file.")
         try:
             fh = self._open_datafile()

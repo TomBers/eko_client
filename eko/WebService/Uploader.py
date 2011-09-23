@@ -14,10 +14,12 @@ from poster.streaminghttp import register_openers
 import urllib2
 from uuid import uuid1
 
-logger = logging.getLogger('eko.WebService.Uploader')
+
 
 class DataUploader( object ):
     filelist = []
+    logger = logging.getLogger('eko.webservice')
+    
     def __init__(self, configpath=Constants.CONFIGPATH, datapath=Constants.DATAPATH, zippath=Constants.ZIPPATH):
         self.configpath = configpath
         self.datapath  = datapath
@@ -43,21 +45,21 @@ class DataUploader( object ):
             zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
             for f in [f[1] for f in self.filelist]:
                 if isfile(f):
-                    logger.debug("Adding %s to zipfile." % f)
+                    self.logger.debug("Adding %s to zipfile." % f)
                     zf.write(f, relpath(f, self.datapath))
                 else:
-                    logger.warn("Data file %s missing." % f)
+                    self.logger.warn("Data file %s missing." % f)
             zf.close()
-            logger.info("Files added to zip file %s" % filename)
+            self.logger.info("Files added to zip file %s" % filename)
         except:
-            logger.exception("Could not create zip file.")
+            self.logger.exception("Could not create zip file.")
         try:
             fh = open(join(self.zippath, manifest), 'wb')
             for f in [f[1] for f in self.filelist]:
                 fh.write('%s\n' % f)
             fh.close()
         except:
-            logger.exception("An error occured while trying to write the manifest.")
+            self.logger.exception("An error occured while trying to write the manifest.")
         return (join(self.zippath, filename), join(self.zippath, manifest))
     
     def update_filelist(self):
@@ -67,7 +69,7 @@ class DataUploader( object ):
             try:
                 c.execute("UPDATE filelist SET synctime=? WHERE id=?", (datetime.utcnow(), id))
             except sqlite3.Error:
-                logger.exception("An error occured when updating the filelist.")
+                self.logger.exception("An error occured when updating the filelist.")
         conn.commit()
         conn.close()
     
@@ -99,7 +101,7 @@ class DataUploader( object ):
             resp_url = urllib2.urlopen(get_target)
             url_targ = resp_url.read().strip()
         except urllib2.URLError:
-            logger.exception("Unable to get upload link.")
+            self.logger.exception("Unable to get upload link.")
             if zh is not None:
                 zh.close()
             if mf is not None:
@@ -113,7 +115,7 @@ class DataUploader( object ):
         try:
             response = urllib2.urlopen(upload)
         except:
-            logger.exception("Unable to upload zip file.")
+            self.logger.exception("Unable to upload zip file.")
         # close zip files
         if zh is not None:
             zh.close()
@@ -122,10 +124,10 @@ class DataUploader( object ):
         if response is not None:
             resp = response.read()
             if resp == "SUCCESS":
-                logger.info("File upload sucessful!")
+                self.logger.info("File upload sucessful!")
                 return False
             else:
-                logger.error("Message from server %s." % resp)
+                self.logger.error("Message from server %s." % resp)
                 return False
         else:
             return False

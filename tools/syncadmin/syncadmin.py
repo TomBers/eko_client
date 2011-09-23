@@ -23,7 +23,6 @@ import eko.SystemInterface.Beagleboard as Beagleboard
 
 if __name__=="__main__":
     logger = LogHelper.getLoggerInstance()
-    logger.setLevel(logging.DEBUG)
     uploader = Uploader.DataUploader()
     print("%d Files Left to Sync\n" % uploader.get_filelist())
     print('-'*20+'\n')
