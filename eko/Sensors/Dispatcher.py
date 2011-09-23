@@ -49,7 +49,7 @@ class EkoDispatcher(object):
                 csv_file = d.harvest()
             except:
                 logger.exception("Could not harvest data according to config file %s" % config)
-            if csv_file:
+            if csv_file is not None:
                 logger.info("Appended new data to file: %s." % csv_file)
                 # add entry to sqlite file db
                 self.add_to_synclist(csv_file)

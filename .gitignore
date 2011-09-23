@@ -32,7 +32,7 @@ setup.py
 app.yaml
 *.lst
 *.zip
-eko/ThirdParty
+#eko/ThirdParty
 scripts/startup.sh
 test_data
 testpopen.hung.py
