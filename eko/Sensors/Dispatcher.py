@@ -9,7 +9,7 @@ import tempfile
 
 import eko.Constants as Constants
 
-from eko.Sensors.MobdusInterface import ModbusInterface, SensorConfigException
+from eko.Sensors.ModbusInterface import Harvester, SensorConfigException
 
 logger = logging.getLogger('eko.Dispatcher')
 

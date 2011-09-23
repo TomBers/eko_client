@@ -129,7 +129,7 @@ class DataLogger(object):
         return
     
     def upload_data_messages(self):
-        
+        pass
     
     def netsync(self):
         # open a internet connection

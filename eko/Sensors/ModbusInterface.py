@@ -41,7 +41,7 @@ class SensorConfigException( Exception ):
     def __str__(self):
         return "Sensor Config Exception: %s, Reason: %s" % (self.filename, self.err)
 
-class MobusInterface( object ):
+class Harvester( object ):
     """Harvest data from a modbus device"""
     def __init__(self, configpath, datapath):
         self.configpath = configpath
