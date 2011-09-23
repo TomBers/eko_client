@@ -15,6 +15,8 @@ import eko.Util.HexEncoding as hexbyte
 import eko.Constants as Constants
 import eko.Sensors.Processor as Processor
 
+from eko.SystemInterface.DisplayControl import DisplayController
+
 import sys
 import serial
 
@@ -27,7 +29,8 @@ import modbus_tk.modbus_rtu as modbus_rtu
 
 from modbus_tk.modbus import ModbusFunctionNotSupportedError, ModbusInvalidResponseError, ModbusNotConnectedError, ModbusError
 
-logger = logging.getLogger('eko.Harvester')
+
+logger = logging.getLogger('eko.ModbusInterface')
 
 #DEFCONFIG = '/etc/eko/sensor_default.cfg'
 
@@ -38,12 +41,14 @@ class SensorConfigException( Exception ):
     def __str__(self):
         return "Sensor Config Exception: %s, Reason: %s" % (self.filename, self.err)
 
-class Harvester( object ):
+class MobusInterface( object ):
     """Harvest data from a modbus device"""
     def __init__(self, configpath, datapath):
         self.configpath = configpath
         self.datapath = datapath
         self.config = ConfigParser.SafeConfigParser()
+        
+        self.disp = DisplayController()
         
         #paths are absolute
         if not isfile(self.configpath):
@@ -228,11 +233,29 @@ class Harvester( object ):
             speed = 9600
             timeout = 5.0
         
+        if self.config.has_option(section, 'port_num'):
+            try:
+                port_num = self.config.getint(section, 'port_num')
+            except ConfigParser.Error:
+                port_num = 0
+        else:
+            port_num = 3
+        
+        if port_num > 3:
+            port_num = 0
+        
+        self.disp.switch_port_power(port_num, True)
+        time.sleep(0.2)
+        self.disp.control_led('mbfrm', True)
+        self.disp.control_led('mberr', False)
+        
         try:
             ser = serial.Serial(portname, speed, timeout=timeout)
         except (OSError, IOError, serial.SerialException):
             logger.exception("Unable to open serial port %s@%d." % (portname, speed))
             ser.close()
+            self.disp.control_led('mbfrm', False)
+            self.disp.control_led('mberr', True)
             return False
         
         logger.debug("Took control of serial port %s, speed %d, timeout %d" % (portname, speed, timeout))
@@ -256,6 +279,8 @@ class Harvester( object ):
         except ConfigParser.Error:
             logger.exception("Unable to get data for modbus transaction.")
             ser.close()
+            self.disp.control_led('mbfrm', False)
+            self.disp.control_led('mberr', True)
             return False
         
         # Create the Modbus Master
@@ -277,9 +302,13 @@ class Harvester( object ):
                 ModbusInvalidResponseError, ModbusNotConnectedError,
                 ModbusError):
             # exception handler
+            self.disp.control_led('mbfrm', False)
+            self.disp.control_led('mberr', True)
             logger.exception('Func(0x%02x) on 0x%02x failed.' % (mb_func, mb_address))
             data = False
         time.sleep(0.5)
         ser.close()
+        self.disp.control_led('mbfrm', False)
+        self.disp.switch_port_power(port_num, False)
         return data
         
