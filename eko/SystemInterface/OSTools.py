@@ -92,7 +92,7 @@ def polling_popen(args, timeout = 1.0):
     return (ret, err)
 
 def pppd_launch():
-    args = ['pppd', 'call', 'three']
+    args = ['pppd', 'call', 'he220']
     logger.info("Launching pppd, calling peer %s." % args[2])
     if not os.path.exists('/etc/ppp/peers/'+args[2]):
         logger.warn('Peer file for %s is missing.' % args[2])

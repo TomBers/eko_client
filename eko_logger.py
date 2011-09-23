@@ -140,6 +140,7 @@ class DataLogger(object):
             x = Beagleboard.turn_on_usbhub()
         except:
             self.logger.exception("Error encountered when attempting to turn on USB Hub.")
+            x = False
         
         ### raise error led if hub power failed
         if not x:
@@ -154,8 +155,8 @@ class DataLogger(object):
                 res = self.ready_internet()
             except InternetConnectionError:
                 self.logger.exception('Could not dial modem.')
-                return False
-            if res:
+                res = None
+            if res is not None:
                 break;
             self.logger.info("Waiting 30 seconds till next attempt.")
             time.sleep(30)
@@ -192,8 +193,10 @@ def main():
                       metavar="CONFIG", help="Path to configuration file.")
     
     (options, args) = parser.parse_args()
-    if options.configfile:
+    if options.configfile is not None:
         configfile = options.configfile
+    else:
+        configfile = '/etc/eko/eko.cfg'
     logger = LogHelper.getLoggerInstance()
     
     # create datalogger instance and run it.
