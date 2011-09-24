@@ -86,13 +86,13 @@ class DataUploader( object ):
         self.logger.debug("Sync variables: %s" % str(pvars))
         # check to see if zipfile exists
         if isfile(zipfile):
-            zh = open(zipfile, 'wb')
+            zh = open(zipfile, 'rb')
             pvars['payload'] = zh
         else:
             zh = None
         # check to see if manifest exists
         if isfile(manifest):
-            mf = open(manifest)
+            mf = open(manifest, 'rb')
             pvars['manifest'] = mf
         else:
             mf = None
@@ -114,12 +114,13 @@ class DataUploader( object ):
         
         headers['X-eko-challenge'] = resp_url.headers['X-eko-challenge']
         headers['X-eko-signature'] = solve_challenge(resp_url.headers['X-eko-challenge'])
-        
+        headers['kiosk-id'] = Beagleboard.get_dieid()
         upload = urllib2.Request(url_targ, datagen, headers)
         try:
             response = urllib2.urlopen(upload)
         except:
             self.logger.exception("Unable to upload zip file.")
+            response = None
         # close zip files
         if zh is not None:
             zh.close()

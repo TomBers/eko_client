@@ -3,7 +3,7 @@ from logging.handlers import TimedRotatingFileHandler
 
 
 
-def getLoggerInstance(level=logging.DEBUG, addhandler=True, verbose_level=logging.DEBUG):
+def getLoggerInstance(level=logging.DEBUG, addhandler=True, verbose_level=logging.WARN):
     logger = logging.getLogger('eko')
     logger.setLevel(logging.DEBUG)
     formatter_c = logging.Formatter('[%(levelname)s] - %(asctime)s - %(name)s - %(message)s')
