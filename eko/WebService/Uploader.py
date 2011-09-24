@@ -148,7 +148,7 @@ class DataUploader( object ):
             for line in fh:
                 m.update(line)
             checksum = m.digest()
-        except OSError, IOError:
+        except (OSError, IOError):
             self.logger.exception("Error calculating zip file md5.")
             checkum = ''
         finally:

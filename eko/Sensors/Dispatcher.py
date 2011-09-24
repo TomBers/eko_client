@@ -4,7 +4,7 @@ import logging
 
 from datetime import datetime
 from os import makedirs
-from os.path import join, splitext, exists, isdir, relpath
+from os.path import join, splitext, exists, isdir
 import tempfile
 
 import eko.Constants as Constants
@@ -30,7 +30,7 @@ class EkoDispatcher(object):
         for root, dirs, files in os.walk(self.sensorcfgpath):
             logger.info("Parsing %s for sensor config files." % root)
             #print files
-            files_in_cdir = [file for file in files if splitext(file)[1] == '.cfg']
+            files_in_cdir = [filen for filen in files if splitext(filen)[1] == '.cfg']
             
             if files_in_cdir is not None:
                 logger.debug("Found %d more sensor config files to parse." % len(files_in_cdir))
@@ -41,7 +41,11 @@ class EkoDispatcher(object):
         """Dispatch harvesters for all configs"""
         path = self.create_harvest_session()
         for config in self.valid_configs:
-            d = Harvester(config, path)
+            try:
+                d = Harvester(config, path)
+            except SensorConfigException:
+                logger.exception("Unable to read config file %s." % config)
+                continue
             if d is None:
                 logger.exception("Could not spawn harvester for config: %s and data path: %s.", (config, path))
                 return

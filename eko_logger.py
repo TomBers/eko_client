@@ -25,6 +25,8 @@ import eko.SystemInterface.OSTools as OSTools
 
 import eko.SystemInterface.Beagleboard as Beagleboard
 
+import eko.WebService.Uploader as Uploader
+
 from eko.ThirdParty import ping
 
 from datetime import datetime, timedelta
@@ -139,13 +141,13 @@ class DataLogger(object):
         upd = Uploader.DataUploader()
         upd.get_filelist()
         ret = upd.build_zip_file()
-        if ret == False:
+        if not ret:
             self.logger.info("Upload task failed!")
             return False
         (zipfile, manifest) = ret
         res = upd.upload_file(zipfile, manifest)
         if res:
-            upd.create_sync_record()
+            upd.create_sync_record(zipfile)
         else:
             self.disp.control_led('neterr', True)
     
@@ -177,7 +179,7 @@ class DataLogger(object):
                 self.logger.exception('Could not dial modem.')
                 res = None
             if res is not None:
-                break;
+                break
             self.logger.info("Waiting 30 seconds till next attempt.")
             time.sleep(30)
             retrycount -= 1
@@ -225,8 +227,8 @@ class DataLogger(object):
                 nextsync = datetime.utcnow() + timedelta(hours=6)
             # loop and sleep
 def main():
-    run_count = 0;
-    run_error_threshold = 15;
+    run_count = 0
+    run_error_threshold = 15
     
     usage = 'usage: %prog [-d] [-v] [-c CONFIG]'
     parser = optparse.OptionParser(usage=usage, version="%prog " + VERSION)
@@ -255,7 +257,7 @@ def main():
         except KeyboardInterrupt:
             sys.exit(0)
         except:
-            run_count += 1;
+            run_count += 1
             if run_count > run_error_threshold:
                 logger.critical("Too many crashes, exiting.")
                 sys.exit(-1)

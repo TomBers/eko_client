@@ -1,4 +1,3 @@
-import subprocess
 import time
 from os.path import exists
 import eko.SystemInterface.OSTools as OSTools
@@ -54,7 +53,9 @@ def handle_modprobe_ehcihcd(insert=True):
 
 def goto_known_state():
     # kill pppd
-    pppd_terminate()
+    pid = OSTools.pppd_pid()
+    if pid != 0:
+        OSTools.pppd_terminate(pid)
     
     # call rmmod
     logger.warn("Cleaning up, removed ehci_hcd.")

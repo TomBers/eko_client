@@ -1,11 +1,7 @@
-import os
-import sqlite3
 import logging
 
 from datetime import datetime
-from os.path import join, splitext, exists, isdir, relpath, isfile, split
-
-from os import makedirs
+from os.path import join, splitext, exists, isdir, isfile, split
 
 import tempfile
 
@@ -17,7 +13,6 @@ import eko.Sensors.Processor as Processor
 
 from eko.SystemInterface.DisplayControl import DisplayController
 
-import sys
 import serial
 
 import csv
@@ -54,7 +49,7 @@ class Harvester( object ):
         if not isfile(self.configpath):
             raise SensorConfigException(self.configpath, 'File Not Found')
         if not isdir(self.datapath):
-            raise SesnsorConfigException(self.datapath, 'Directory Not Found')
+            raise SensorConfigException(self.datapath, 'Directory Not Found')
         try:
             self.config.readfp(open(Constants.SENSOR_DEFCONFIG))
         except (ConfigParser.Error, IOError, ValueError, TypeError):
@@ -75,7 +70,7 @@ class Harvester( object ):
         logger.info("Opening binary file %s for append." % binpath)
         try:
             fh = open(binpath, 'ab')
-        except IOError, OSError:
+        except (IOError, OSError):
             logger.exception("Unable to open bin file.")
             fh.close()
             
@@ -134,7 +129,7 @@ class Harvester( object ):
         if self.config.has_option(sect, 'samp_interval'):
             try:
                 samp_i = self.config.getfloat(sect, 'samp_interval')
-            except ConfigParser.Error, TypeError:
+            except (ConfigParser.Error, TypeError):
                 samp_i = 2e-5
                 logger.exception("samp_interval has bad value.")
         else:
@@ -144,7 +139,7 @@ class Harvester( object ):
         if self.config.has_option(sect, 'samp_count'):
             try:
                 samp_c = self.config.getint(sect, 'samp_count')
-            except ConfigParser.Error, TypeError:
+            except (ConfigParser.Error, TypeError):
                 samp_c = 20
                 logger.exception("samp_count has bad value.")
         else:
