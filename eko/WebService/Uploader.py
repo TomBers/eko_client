@@ -55,6 +55,7 @@ class DataUploader( object ):
             self.logger.info("Files added to zip file %s" % filename)
         except:
             self.logger.exception("Could not create zip file.")
+            return False
         try:
             fh = open(join(self.zippath, manifest), 'wb')
             for f in [f[1] for f in self.filelist]:
@@ -128,7 +129,7 @@ class DataUploader( object ):
             resp = response.read()
             if resp == "SUCCESS":
                 self.logger.info("File upload sucessful!")
-                return False
+                return True
             else:
                 self.logger.error("Message from server %s." % resp)
                 return False

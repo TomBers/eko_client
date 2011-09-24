@@ -10,6 +10,7 @@ import time
 import signal
 import socket
 import urllib2
+import os
 
 from ConfigParser import ConfigParser
 
@@ -25,6 +26,8 @@ import eko.SystemInterface.OSTools as OSTools
 import eko.SystemInterface.Beagleboard as Beagleboard
 
 from eko.ThirdParty import ping
+
+from datetime import datetime, timedelta
 
 VERSION = '2.0'
 
@@ -57,6 +60,10 @@ class DataLogger(object):
             self.logger.exception("Databases could not be opened.")
         
         self.disp = DisplayController()
+        try:
+            Beagleboard.goto_known_state()
+        except:
+            self.logger.exception("Unable to reset board to default setting.")
     
     def _try_network(self):
         # try ping first
@@ -76,7 +83,6 @@ class DataLogger(object):
         return x
     
     def ready_internet(self):
-        
         self.logger.info("Attempting to connect to the internet.")
         ## open a pppd instance
         OSTools.pppd_launch()
@@ -117,19 +123,31 @@ class DataLogger(object):
     
     def stop_internet(self):
         self.logger.info("Dropping net connection.")
+        self.disp.control_led('net', False)
         return OSTools.pppd_terminate(OSTools.pppd_pid())
     
     def datalog(self):
         # instantiate a harvest dispatcher
         dispatch = EkoDispatcher()
         dispatch.import_configs()
-        logger.info("Dispatching all sensor polling operations.")
+        self.logger.info("Dispatching all sensor polling operations.")
         dispatch.dispatch_all()
-        logger.info("All sensors polled.")
+        self.logger.info("All sensors polled.")
         return
     
     def upload_data_messages(self):
-        pass
+        upd = Uploader.DataUploader()
+        upd.get_filelist()
+        ret = upd.build_zip_file()
+        if ret == False:
+            self.logger.info("Upload task failed!")
+            return False
+        (zipfile, manifest) = ret
+        res = upd.upload_file(zipfile, manifest)
+        if res:
+            upd.create_sync_record()
+        else:
+            self.disp.control_led('neterr', True)
     
     def netsync(self):
         # open a internet connection
@@ -149,6 +167,8 @@ class DataLogger(object):
         ## wait for system to settle
         time.sleep(10)
         
+        ## sync time if need be
+        os.popen('ntpdate -t 90 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org')
         retrycount = 3
         while retrycount > 0:
             try:
@@ -165,7 +185,11 @@ class DataLogger(object):
         
         # Assume we have net connectivity by this point.
         self.disp.control_led('sync', True)
-        time.sleep(30)
+        try:
+            self.upload_data_messages()
+        except:
+            self.logger.exception('Network Synchronisation Failed!')
+            self.disp.control_led('neterr', True)
         self.disp.control_led('sync', False)
         # terminate network
         self.stop_internet()
@@ -176,11 +200,33 @@ class DataLogger(object):
             Beagleboard.turn_off_usbhub()
         except:
             self.logger.exception("Error encountered when attempting to power off USB hub.")
-        
-
+    
+    def run(self):
+        # mark
+        starttime = datetime.utcnow()
+        nextsync = starttime
+        while True:
+            # next poll is scheduled for time nextpoll. If nextpoll is ahead
+            # tell beagle to sleep for 10 mins
+            fh = open('/debug/pm_debug/wakeup_timer_seconds')
+            fh.write('600')
+            fh.close()
+            fh = open('/sys/power/state')
+            fh.write('mem')
+            fh.close()
+            # wait 60 seconds
+            time.sleep(60)
+            self.datalog()
+            
+            # check if its time for a netsync
+            if datetime.utcnow() > nextsync:
+                self.netsync()
+                # next sync is in 10 hours
+                nextsync = datetime.utcnow() + timedelta(hours=6)
+            # loop and sleep
 def main():
     run_count = 0;
-    run_error_threshold = 5;
+    run_error_threshold = 15;
     
     usage = 'usage: %prog [-d] [-v] [-c CONFIG]'
     parser = optparse.OptionParser(usage=usage, version="%prog " + VERSION)
@@ -199,15 +245,13 @@ def main():
         configfile = '/etc/eko/eko.cfg'
     logger = LogHelper.getLoggerInstance()
     
-    # create datalogger instance and run it.
-    tx = 1
-    while tx == 1:
-        tx = 0
+    # create datalogger instance and run it
+    while True:
         try:
             logger.info("Executing main code with config %s. Attempt #%d." % (configfile, run_count))
             datalogger = DataLogger(configfile)
             time.sleep(5)
-            datalogger.netsync()
+            datalogger.run()
         except KeyboardInterrupt:
             sys.exit(0)
         except:
