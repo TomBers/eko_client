@@ -24,13 +24,13 @@ CREATE TABLE IF NOT EXISTS filelist (id INTEGER PRIMARY KEY, filename VARCHAR,
 
 
 CREATE_SERVER_MSG_TBL = """
-CREATE TABLE IF NOT EXISTS servermsg (id INTEGER PRIMARY KEY, message VARCHAR, 
-		senttime DATETIME, synctime DATETIME, showtime DATETIME)
+CREATE TABLE IF NOT EXISTS servermsg (id INTEGER PRIMARY KEY, msg VARCHAR, 
+		msgtype VARCHAR, senttime DATETIME, synctime DATETIME, showtime DATETIME)
 """
 
 CREATE_CLIENT_MSG_TBL = """
 CREATE TABLE IF NOT EXISTS clientmsg (id INTEGER PRIMARY KEY, message VARCHAR, 
-		time DATETIME, synctime DATETIME)
+		sessionref VARCHAR, origin VARCHAR, origintime DATETIME, synctime DATETIME)
 """
 
 CREATE_SERVER_CMD_TBL = """
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS servercmd (id INTEGER PRIMARY KEY, command VARCHAR,
 
 CREATE_SYNCLOG_TBL = """
 CREATE TABLE IF NOT EXISTS synclog (id INTEGER PRIMARY KEY, time DATETIME,
-		payload VARCHAR, size INTEGER, checksum VARCHAR, files TEXT, dir VARCHAR)
+		payload VARCHAR, size INTEGER, checksum VARCHAR, files TEXT)
 """
 
 SYNC_DB_NAME = "sync.db"

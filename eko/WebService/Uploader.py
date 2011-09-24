@@ -4,6 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from datetime import datetime
 import logging
 
+import os
 
 import eko.Constants as Constants
 import eko.SystemInterface.Beagleboard as Beagleboard
@@ -14,6 +15,7 @@ from poster.streaminghttp import register_openers
 import urllib2
 from uuid import uuid1
 
+import hashlib
 
 
 class DataUploader( object ):
@@ -80,9 +82,10 @@ class DataUploader( object ):
         pvars = {'kiosk-id': Beagleboard.get_dieid(),
                 'software_version': '1.0.0', 'type':'data', 'reference': uuid1().get_hex()}
         
+        self.logger.debug("Sync variables: %s" % str(pvars))
         # check to see if zipfile exists
         if isfile(zipfile):
-            zh = open(zipfile)
+            zh = open(zipfile, 'wb')
             pvars['payload'] = zh
         else:
             zh = None
@@ -131,3 +134,37 @@ class DataUploader( object ):
                 return False
         else:
             return False
+    
+    def create_sync_record(self, zipfile):
+        sql = "INSERT INTO synclog (time, payload, size, checksum, files) VALUES (?, ?, ?, ?, ?)"
+        try:
+            fsize = os.stat(zipfile).st_size
+        except OSError:
+            fsize = 0
+        try:
+            fh = open(zipfile, 'rb')
+            m = hashlib.md5()
+            for line in fh:
+                m.update(line)
+            checksum = m.digest()
+        except OSError, IOError:
+            self.logger.exception("Error calculating zip file md5.")
+            checkum = ''
+        finally:
+            if fh is not None:
+                fh.close()
+        files = "".join(['%s\n' % f[1] for f in self.filelist])
+        values = (datetime.utcnow(), zipfile, fsize, checksum, files)
+        
+        con = sqlite3.connect(join(self.configpath, 'filelist.db'))
+        c = con.cursor()
+        try:
+            c.execute(sql, values)
+            self.logger.debug("Saved synclog to db.")
+        except sqlite3.Error:
+            self.logger.exception("Database error.")
+        finally:
+            c.close()
+            con.commit()
+            con.close()
+        return

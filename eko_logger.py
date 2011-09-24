@@ -164,9 +164,9 @@ class DataLogger(object):
             self.logger.info("%d attempts left." % retrycount)
         
         # Assume we have net connectivity by this point.
-        
+        self.disp.control_led('sync', True)
         time.sleep(30)
-        
+        self.disp.control_led('sync', False)
         # terminate network
         self.stop_internet()
         time.sleep(5)
