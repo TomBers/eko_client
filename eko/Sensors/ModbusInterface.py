@@ -153,9 +153,9 @@ class Harvester( object ):
         datarow = {'date': datetime.utcnow().strftime("%d-%m-%YT%H-%M-%S")}
         files = []
         
-        if self.config.has_option(section, 'port_num'):
+        if self.config.has_option('DEFAULT', 'port_num'):
             try:
-                port_num = self.config.getint(section, 'port_num')
+                port_num = self.config.getint('DEFAULT', 'port_num')
             except ConfigParser.Error:
                 port_num = 0
         else:
