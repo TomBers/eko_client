@@ -60,6 +60,9 @@ class EkoDispatcher(object):
     
     def add_to_synclist(self, filenames):
         """Add file to filelist.db"""
+        if not filenames:
+            logger.info("No files to sync.")
+            return
         try:
             con = sqlite3.connect(join(self.configpath, "filelist.db"))
             c = con.cursor()

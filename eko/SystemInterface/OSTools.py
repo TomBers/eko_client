@@ -120,7 +120,7 @@ def pppd_isrunning(pid):
 def pppd_status():
     try:
         ifaces = net_all_interfaces()
-    except (IOError, OSError):
+    except (IOError, OSError, socket.error):
         logger.exception("Unable to get all network interfaces.")
         ifaces = []
     logger.debug('Network interfaces available: %s.' % str(ifaces))
@@ -129,7 +129,7 @@ def pppd_status():
             logger.info("PPP network interface exists: %s." % str(iface))
             return True
     # no ppp interface
-    logger.info("PPP network interface absent.")
+    logger.warn("PPP network interface absent.")
     return False
 
 def pppd_pid():

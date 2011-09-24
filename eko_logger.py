@@ -11,6 +11,7 @@ import signal
 import socket
 import urllib2
 import os
+import sqlite3
 
 from ConfigParser import ConfigParser
 
@@ -39,6 +40,8 @@ def handleSIGTERM():
 signal.signal(signal.SIGTERM, handleSIGTERM)
 
 class InternetConnectionError(Exception):
+    """Raised when there is a catastrophic failure when
+       a network connection is attempted"""
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -58,31 +61,32 @@ class DataLogger(object):
         self.logger.info("Opening databases.")
         try:
             DBSetup.check_databases()
-        except:
+        except (sqlite3.Error, IOError, OSError):
             self.logger.exception("Databases could not be opened.")
         
         self.disp = DisplayController()
         try:
+            ## removes all modules, shutsdown hub
             Beagleboard.goto_known_state()
-        except:
+        except (OSError, IOError):
             self.logger.exception("Unable to reset board to default setting.")
     
     def _try_network(self):
         # try ping first
-        try:
-            self.logger.info("Trying ping for google.com.")
-            x = ping.do_one('www.google.com', 10000, 1, 8)
-        except socket.error:
-            self.logger.exception("Ping failed!")
-            x = None
-        google_req = urllib2.Request('http://www.google.com/index.html')
+        #try:
+        #    self.logger.info("Trying ping for google.com.")
+        #    x = ping.do_one('www.google.com', 10000, 1, 8)
+        #except socket.error:
+        #    self.logger.exception("Ping failed!")
+        #    x = None
+        #google_req = urllib2.Request('http://www.google.com/index.html')
         try:
             self.logger.info("Trying url fetch on google.com")
             x = urllib2.urlopen(google_req, timeout=60)
         except urllib2.URLError:
             self.logger.exception("URL Error, unable to reach google.com")
-        # if the ping suceeds and urlfetch fails, x will still be valid
-        return x
+            x = None
+       return x
     
     def ready_internet(self):
         self.logger.info("Attempting to connect to the internet.")
@@ -98,7 +102,7 @@ class DataLogger(object):
             if OSTools.pppd_status():
                 ## ppp is up, try ping
                 x = self._try_network()
-                if x:
+                if x is not None:
                     self.disp.control_led('net', True)
                     self.disp.control_led('neterr', False)
                     self.logger.info("Ping success.")
@@ -117,7 +121,7 @@ class DataLogger(object):
                     raise InternetConnectionError('pppd unexpectedly quit!')
                 else:
                     ## wait 10 seconds, and retry
-                    time.sleep(20)
+                    time.sleep(10)
             retrycount -= 1
             self.logger.info("Rechecking network, remaining attempts %d." % retrycount)
         OSTools.pppd_terminate(OSTools.pppd_pid())
@@ -159,7 +163,7 @@ class DataLogger(object):
         
         try:
             x = Beagleboard.turn_on_usbhub()
-        except:
+        except (OSError, IOError):
             self.logger.exception("Error encountered when attempting to turn on USB Hub.")
             x = False
         
@@ -170,8 +174,6 @@ class DataLogger(object):
         ## wait for system to settle
         time.sleep(10)
         
-        ## sync time if need be
-        os.popen('ntpdate -t 90 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org')
         retrycount = 3
         while retrycount > 0:
             try:
@@ -187,6 +189,10 @@ class DataLogger(object):
             self.logger.info("%d attempts left." % retrycount)
         
         # Assume we have net connectivity by this point.
+        
+        ## sync time if need be
+        os.popen('ntpdate -t 90 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org')
+        
         self.disp.control_led('sync', True)
         try:
             self.upload_data_messages()
@@ -209,6 +215,14 @@ class DataLogger(object):
         starttime = datetime.utcnow()
         nextsync = starttime
         while True:
+            try:
+                self.datalog()
+            except KeyboardInterrupt:
+                exit(0)
+            except:
+                self.logger.exception("Unhandled exception!")
+            
+            self.logger.info("Data logging operation complete.")
             # next poll is scheduled for time nextpoll. If nextpoll is ahead
             # tell beagle to sleep for 10 mins
             self.logger.info("Sleeping for 600 seconds.")
@@ -219,12 +233,10 @@ class DataLogger(object):
                 self.logger.exception("Unable to put system to sleep")
             # wait 60 seconds
             time.sleep(20)
-            self.datalog()
-            self.logger.info("Data logging operation complete.")
             # check if its time for a netsync
             if datetime.utcnow() > nextsync:
                 self.netsync()
-                # next sync is in 10 hours
+                # next sync is in 6 hours
                 nextsync = datetime.utcnow() + timedelta(hours=6)
             td = nextsync - datetime.utcnow()
             self.logger.info("Next internet sync is in %.2f minutes." % (td.seconds/60.0))
@@ -266,5 +278,5 @@ def main():
                 logger.critical("Too many crashes, exiting.")
                 sys.exit(-1)
             logger.exception("DataLogger crashed! Attempting to retry.")
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
