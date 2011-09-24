@@ -210,14 +210,13 @@ class DataLogger(object):
         while True:
             # next poll is scheduled for time nextpoll. If nextpoll is ahead
             # tell beagle to sleep for 10 mins
-            fh = open('/debug/pm_debug/wakeup_timer_seconds')
-            fh.write('600')
-            fh.close()
-            fh = open('/sys/power/state')
-            fh.write('mem')
-            fh.close()
+            try:
+                os.popen('echo 600 > /debug/pm_debug/wakeup_timer_seconds')
+                os.popen('echo mem > /sys/power/state')
+            except (IOError, OSError):
+                logger.exception("Unable to put system to sleep")
             # wait 60 seconds
-            time.sleep(60)
+            time.sleep(20)
             self.datalog()
             
             # check if its time for a netsync
