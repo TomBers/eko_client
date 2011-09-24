@@ -152,6 +152,22 @@ class Harvester( object ):
         sects.sort()
         datarow = {'date': datetime.utcnow().strftime("%d-%m-%YT%H-%M-%S")}
         files = []
+        
+        if self.config.has_option(section, 'port_num'):
+            try:
+                port_num = self.config.getint(section, 'port_num')
+            except ConfigParser.Error:
+                port_num = 0
+        else:
+            port_num = 3
+        
+        if port_num > 3:
+            port_num = 0
+        
+        logger.info("Powering datalogger port %d." % port_num)
+        self.disp.switch_port_power(port_num, True)
+        time.sleep(0.2)
+        
         for sect in sects:
             logger.info("Entering config section %s." % sect)
             if self.config.has_option(sect, 'col_name'):
@@ -198,7 +214,10 @@ class Harvester( object ):
                     wait = 5.0
                 logger.info("Sleeping for %.2f seconds." % wait)
                 time.sleep(wait)
-                    
+        
+        logger.info("Removing power from datalogger port %d.", port_num)
+        self.disp.switch_port_power(port_num, False)
+        
         logger.info("Making data entry in csv file.")
         try:
             fh = self._open_datafile()
@@ -243,19 +262,6 @@ class Harvester( object ):
             speed = 9600
             timeout = 5.0
         
-        if self.config.has_option(section, 'port_num'):
-            try:
-                port_num = self.config.getint(section, 'port_num')
-            except ConfigParser.Error:
-                port_num = 0
-        else:
-            port_num = 3
-        
-        if port_num > 3:
-            port_num = 0
-        
-        self.disp.switch_port_power(port_num, True)
-        time.sleep(0.2)
         self.disp.control_led('mbfrm', True)
         self.disp.control_led('mberr', False)
         
@@ -319,6 +325,6 @@ class Harvester( object ):
         time.sleep(0.5)
         ser.close()
         self.disp.control_led('mbfrm', False)
-        self.disp.switch_port_power(port_num, False)
+        
         return data
         

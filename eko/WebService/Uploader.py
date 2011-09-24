@@ -10,6 +10,8 @@ import eko.Constants as Constants
 import eko.SystemInterface.Beagleboard as Beagleboard
 from eko.Util.Security import solve_challenge
 
+import eko.Util.HexEncoding as Hex
+
 from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
 import urllib2
@@ -30,7 +32,7 @@ class DataUploader( object ):
     def get_filelist(self, limit=15):
         conn = sqlite3.connect(join(self.configpath,'filelist.db'))
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM filelist WHERE synctime is NULL LIMIT ?", (limit,))
+        cursor.execute("SELECT id, filename, synctime FROM filelist WHERE synctime is NULL LIMIT ?", (limit,))
         list = cursor.fetchall()
         if list is not None:
             self.filelist = list
@@ -68,8 +70,10 @@ class DataUploader( object ):
     def update_filelist(self):
         conn = sqlite3.connect(join(self.configpath, 'filelist.db'))
         c = conn.cursor()
+        self.logger.info("Updating filelist.db.")
         for id in [f[0] for f in self.filelist]:
             try:
+                self.logger.debug("Updating record for filelist id: %d", id)
                 c.execute("UPDATE filelist SET synctime=? WHERE id=?", (datetime.utcnow(), id))
             except sqlite3.Error:
                 self.logger.exception("An error occured when updating the filelist.")
@@ -115,10 +119,17 @@ class DataUploader( object ):
         headers['X-eko-challenge'] = resp_url.headers['X-eko-challenge']
         headers['X-eko-signature'] = solve_challenge(resp_url.headers['X-eko-challenge'])
         headers['kiosk-id'] = Beagleboard.get_dieid()
+        self.logger.debug("Challenge: %s." % headers['X-eko-challenge'])
+        self.logger.debug("Sig: %s." % headers['X-eko-signature'])
+        self.logger.debug("Kiosk-id: %s" % headers['kiosk-id'])
+        
         upload = urllib2.Request(url_targ, datagen, headers)
         try:
             response = urllib2.urlopen(upload)
-        except:
+        except urllib2.HTTPError, e:
+            self.logger.exception("Server error: %s" % str(e.code))
+            self.logger.error("Server return val: %s." % e.read())
+        except urllib2.URLError:
             self.logger.exception("Unable to upload zip file.")
             response = None
         # close zip files
@@ -128,11 +139,11 @@ class DataUploader( object ):
             mf.close()
         if response is not None:
             resp = response.read()
-            if resp == "SUCCESS":
+            if resp.lower().strip() == "success":
                 self.logger.info("File upload sucessful!")
                 return True
             else:
-                self.logger.error("Message from server %s." % resp)
+                self.logger.error("Message from server '%s'." % resp.lower().strip())
                 return False
         else:
             return False
@@ -143,6 +154,7 @@ class DataUploader( object ):
             fsize = os.stat(zipfile).st_size
         except OSError:
             fsize = 0
+        self.logger.debug("Zipfile %s size %d" % (zipfile, fsize))
         try:
             fh = open(zipfile, 'rb')
             m = hashlib.md5()
@@ -155,10 +167,11 @@ class DataUploader( object ):
         finally:
             if fh is not None:
                 fh.close()
+        self.logger.debug("Payload checksum: %s." % checksum)
         files = "".join(['%s\n' % f[1] for f in self.filelist])
-        values = (datetime.utcnow(), zipfile, fsize, checksum, files)
+        values = (datetime.utcnow(), zipfile, fsize, Hex.ByteToHex(checksum), files)
         
-        con = sqlite3.connect(join(self.configpath, 'filelist.db'))
+        con = sqlite3.connect(join(self.configpath, 'sync.db'))
         c = con.cursor()
         try:
             c.execute(sql, values)

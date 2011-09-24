@@ -148,6 +148,7 @@ class DataLogger(object):
         res = upd.upload_file(zipfile, manifest)
         if res:
             upd.create_sync_record(zipfile)
+            upd.update_filelist()
         else:
             self.disp.control_led('neterr', True)
     
@@ -210,20 +211,24 @@ class DataLogger(object):
         while True:
             # next poll is scheduled for time nextpoll. If nextpoll is ahead
             # tell beagle to sleep for 10 mins
+            self.logger.info("Sleeping for 600 seconds.")
             try:
                 os.popen('echo 600 > /debug/pm_debug/wakeup_timer_seconds')
                 os.popen('echo mem > /sys/power/state')
             except (IOError, OSError):
-                logger.exception("Unable to put system to sleep")
+                self.logger.exception("Unable to put system to sleep")
             # wait 60 seconds
             time.sleep(20)
             self.datalog()
-            
+            self.logger.info("Data logging operation complete.")
             # check if its time for a netsync
             if datetime.utcnow() > nextsync:
                 self.netsync()
                 # next sync is in 10 hours
                 nextsync = datetime.utcnow() + timedelta(hours=6)
+            td = nextsync - datetime.utcnow()
+            self.logger.info("Next internet sync is in %.2f minutes." % (td.seconds/60.0))
+            
             # loop and sleep
 def main():
     run_count = 0
