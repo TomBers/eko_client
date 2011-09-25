@@ -20,6 +20,8 @@ import socket
 
 import eko.Constants as Constants
 
+logger = logging.getLogger('eko.heartbeat')
+
 def send_heartbeat(url, uptime, rwip='0.0.0.0'):
     json_msg = {}
     json_msg['method'] = 'heartbeat'
