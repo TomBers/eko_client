@@ -86,7 +86,7 @@ class DataLogger(object):
         except urllib2.URLError:
             self.logger.exception("URL Error, unable to reach google.com")
             x = None
-       return x
+        return x
     
     def ready_internet(self):
         self.logger.info("Attempting to connect to the internet.")
