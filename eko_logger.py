@@ -261,7 +261,9 @@ def main():
         configfile = options.configfile
     else:
         configfile = '/etc/eko/eko.cfg'
-    logger = LogHelper.getLoggerInstance()
+    loglvl_console = logging.DEBUG if options.debug else logging.INFO
+    
+    logger = LogHelper.getLoggerInstance(verbose_level=loglvl_console)
     
     # create datalogger instance and run it
     while True:

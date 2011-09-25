@@ -1,5 +1,5 @@
 import logging
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 
 
 
@@ -12,7 +12,7 @@ def getLoggerInstance(level=logging.DEBUG, addhandler=True, verbose_level=loggin
     ch.setFormatter(formatter_c)
     logger.addHandler(ch)
     formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(name)s - %(module)s(%(lineno)d) %(funcName)s - %(message)s')    
-    fh = TimedRotatingFileHandler('/var/log/eko', when='midnight', backupCount=10)
+    fh = RotatingFileHandler('/home/root/eko.log', maxBytes=50000, backupCount=10)
     fh.setLevel(level)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
