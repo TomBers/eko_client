@@ -80,7 +80,7 @@ class DataLogger(object):
         #except socket.error:
         #    self.logger.exception("Ping failed!")
         #    x = None
-        #google_req = urllib2.Request('http://www.google.com/index.html')
+        google_req = urllib2.Request('http://www.google.com/index.html')
         try:
             self.logger.info("Trying url fetch on google.com")
             x = urllib2.urlopen(google_req, timeout=60)

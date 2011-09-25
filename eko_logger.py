@@ -79,7 +79,7 @@ class DataLogger(object):
         #except socket.error:
         #    self.logger.exception("Ping failed!")
         #    x = None
-        #google_req = urllib2.Request('http://www.google.com/index.html')
+        google_req = urllib2.Request('http://www.google.com/index.html')
         try:
             self.logger.info("Trying url fetch on google.com")
             x = urllib2.urlopen(google_req, timeout=60)
@@ -248,8 +248,6 @@ def main():
     
     usage = 'usage: %prog [-d] [-v] [-c CONFIG]'
     parser = optparse.OptionParser(usage=usage, version="%prog " + VERSION)
-    parser.add_option("-v", "--verbose", help="Print events to stdout.",
-                      action="store_true", dest="verbose", default=False)
     parser.add_option("-d", "--debug", help="Enable debug output.",
                       action="store_true", dest="debug", default=False)
     parser.add_option("-c", "--config",
