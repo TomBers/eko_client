@@ -76,7 +76,7 @@ def main():
     
     while True:
         UPTIME = datetime.utcnow() - START
-        uptime = UPTIME.total_seconds()
+        uptime = UPTIME.seconds
         # check if network is up
         pppdstatus = OSTools.pppd_status()
         if pppdstatus:
