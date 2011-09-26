@@ -155,6 +155,19 @@ class DataLogger(object):
         messages = SMsgs.get_messages()
         return messages
     
+    def upload_logs(self):
+        upd = Uploader.DataUploader()
+        ret = upd.zip_logfiles()
+        if not ret:
+            self.logger.info("Upload task exited. Error or nothing to sync.")
+            return False
+        (zipfile, manifest) = ret
+        res = upd.upload_file(zipfile, manifest, upload_type="logs")
+        if res:
+            upd.create_sync_record(zipfile)
+        else:
+            self.disp.control_led('neterr', True)
+    
     def upload_data_messages(self):
         upd = Uploader.DataUploader()
         upd.get_filelist()
