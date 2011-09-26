@@ -14,7 +14,7 @@ class UploaderTest(unittest.TestCase):
     zippath = 'unittests/zip'
     def setUp(self):
         # create a small filelist
-        con = sqlite3.connect('unittests/config/filelist.db')
+        con = sqlite3.connect('unittests/config/filelist.db', detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         c.execute(CREATE_FILELIST_TBL)
         c.close()
@@ -22,7 +22,7 @@ class UploaderTest(unittest.TestCase):
         con.close()
         
     def _create_some_unsync(self):
-        con = sqlite3.connect('unittests/config/filelist.db')
+        con = sqlite3.connect('unittests/config/filelist.db', detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         c.execute("DELETE FROM filelist")
         c.execute("insert into filelist (filename, synctime) values (?, ?)", ('unittests/data/a',datetime.utcnow()))
@@ -36,7 +36,7 @@ class UploaderTest(unittest.TestCase):
         con.close()
     
     def _create_all_unsync(self):
-        con = sqlite3.connect('unittests/config/filelist.db')
+        con = sqlite3.connect('unittests/config/filelist.db', detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         c.execute("DELETE FROM filelist")
         c.execute("insert into filelist (filename) values (?)", ('unittests/data/a',))
@@ -50,7 +50,7 @@ class UploaderTest(unittest.TestCase):
         con.close()
     
     def _create_all_sync(self):
-        con = sqlite3.connect('unittests/config/filelist.db')
+        con = sqlite3.connect('unittests/config/filelist.db', detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         c.execute("DELETE FROM filelist")
         c.execute("insert into filelist (filename, synctime) values (?, ?)", ('unittests/data/a',datetime.utcnow()-timedelta(hours=1)))
@@ -129,7 +129,7 @@ class UploaderTest(unittest.TestCase):
         self.assertEqual(filelist, [])
         
     def _readfilelist(self):
-        con = sqlite3.connect('unittests/config/filelist.db')
+        con = sqlite3.connect('unittests/config/filelist.db', detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         req = c.execute("SELECT * FROM filelist WHERE synctime is NULL")
         list = req.fetchall()

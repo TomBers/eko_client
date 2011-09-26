@@ -19,27 +19,27 @@ logger = logging.getLogger('eko.dbsetup')
 
 CREATE_FILELIST_TBL = """
 CREATE TABLE IF NOT EXISTS filelist (id INTEGER PRIMARY KEY, filename VARCHAR, 
-        synctime DATETIME)
+        synctime TIMESTAMP)
 """
 
 
 CREATE_SERVER_MSG_TBL = """
 CREATE TABLE IF NOT EXISTS servermsg (id INTEGER PRIMARY KEY, msg VARCHAR, 
-        msgtype VARCHAR, senttime DATETIME, synctime DATETIME, showtime DATETIME)
+        msgtype VARCHAR, senttime TIMESTAMP, synctime TIMESTAMP, showtime TIMESTAMP)
 """
 
 CREATE_CLIENT_MSG_TBL = """
 CREATE TABLE IF NOT EXISTS clientmsg (id INTEGER PRIMARY KEY, message VARCHAR, 
-        sessionref VARCHAR, origin VARCHAR, origintime DATETIME, synctime DATETIME)
+        sessionref VARCHAR, origin VARCHAR, origintime TIMESTAMP, synctime TIMESTAMP)
 """
 
 CREATE_SERVER_CMD_TBL = """
 CREATE TABLE IF NOT EXISTS servercmd (id INTEGER PRIMARY KEY, command VARCHAR, 
-        time DATETIME, executed DATETIME, reported DATETIME)
+        time TIMESTAMP, executed TIMESTAMP, reported TIMESTAMP)
 """
 
 CREATE_SYNCLOG_TBL = """
-CREATE TABLE IF NOT EXISTS synclog (id INTEGER PRIMARY KEY, time DATETIME,
+CREATE TABLE IF NOT EXISTS synclog (id INTEGER PRIMARY KEY, time TIMESTAMP,
         payload VARCHAR, size INTEGER, checksum VARCHAR, files TEXT)
 """
 
@@ -95,7 +95,7 @@ def _check_db_file(filename):
         return False
         
     try:
-        conn = sqlite3.connect(join(CFG_ROOT, filename))
+        conn = sqlite3.connect(join(CFG_ROOT, filename), detect_types=sqlite3.PARSE_DECLTYPES)
     except:
         logger.exception("Unable to connect to database file %s." % filename)
         return False
@@ -146,7 +146,7 @@ def _create_sync_db(newfile=True):
                 logger.critical("Filesystem Error")
     # try to create a sqlite instance
     try:
-        conn = sqlite3.connect(join(CFG_ROOT, 'sync.db'))
+        conn = sqlite3.connect(join(CFG_ROOT, 'sync.db'), detect_types=sqlite3.PARSE_DECLTYPES)
         logger.debug("Connection open to sync.db.")
         conn.execute(CREATE_CLIENT_MSG_TBL)
         conn.execute(CREATE_SERVER_CMD_TBL)
@@ -179,7 +179,7 @@ def _create_filelist_db(newfile=True):
                 logger.critical("Filesystem Error")
     # try to create a sqlite instance
     try:
-        conn = sqlite3.connect(join(CFG_ROOT, 'filelist.db'))
+        conn = sqlite3.connect(join(CFG_ROOT, 'filelist.db'), detect_types=sqlite3.PARSE_DECLTYPES)
         logger.debug("Connection open to filelist.db.")
         conn.execute(CREATE_FILELIST_TBL)
         logger.debug("CREATE statement executed on filelist.db")

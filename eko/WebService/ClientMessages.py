@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger('eko.webservice.clientmessages')
 
 def _update_clientmsg_table(ids, configpath=Constants.CONFIGPATH):
-    con = sqlite3.connect(join(configpath, 'sync.db'))
+    con = sqlite3.connect(join(configpath, 'sync.db'), detect_types=sqlite3.PARSE_DECLTYPES)
     logger.debug("Updating records with ids: %s" % ("".join(["%s " % i for i in ids])))
     c = con.cursor()
     for id in ids:
@@ -34,7 +34,7 @@ def _update_clientmsg_table(ids, configpath=Constants.CONFIGPATH):
     return
 
 def add_clientmessage(message, sessionref, origin, origintime):
-    con = sqlite3.connect(join(Constants.CONFIGPATH, 'sync.db'))
+    con = sqlite3.connect(join(Constants.CONFIGPATH, 'sync.db'), detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     c = con.cursor()
     try:
         c.execute("INSERT INTO clientmsg (message, sessionref, origin, origintime) VALUES (?, ?, ?, ?)",
@@ -49,7 +49,7 @@ def add_clientmessage(message, sessionref, origin, origintime):
 def transmit_clientmessages(configpath=Constants.CONFIGPATH):
     # upload
     logger.info("Transmitting client messages to server.")
-    con = sqlite3.connect(join(configpath, 'sync.db'))
+    con = sqlite3.connect(join(configpath, 'sync.db'), detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     c = con.cursor()
     try:
         c.execute("SELECT message, sessionref, origin, origintime, id FROM clientmsg WHERE synctime is NULL LIMIT 15")

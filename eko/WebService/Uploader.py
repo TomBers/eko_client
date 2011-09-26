@@ -31,7 +31,7 @@ class DataUploader( object ):
         self.zippath = zippath
     
     def get_filelist(self, limit=15):
-        conn = sqlite3.connect(join(self.configpath,'filelist.db'))
+        conn = sqlite3.connect(join(self.configpath,'filelist.db'), detect_types=sqlite3.PARSE_DECLTYPES)
         cursor = conn.cursor()
         cursor.execute("SELECT id, filename, synctime FROM filelist WHERE synctime is NULL LIMIT ?", (limit,))
         list = cursor.fetchall()
@@ -72,7 +72,7 @@ class DataUploader( object ):
         return (join(self.zippath, filename), join(self.zippath, manifest))
     
     def update_filelist(self):
-        conn = sqlite3.connect(join(self.configpath, 'filelist.db'))
+        conn = sqlite3.connect(join(self.configpath, 'filelist.db'), detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
         self.logger.info("Updating filelist.db.")
         for id in [f[0] for f in self.filelist]:
@@ -176,7 +176,7 @@ class DataUploader( object ):
         files = "".join(['%s\n' % f[1] for f in self.filelist])
         values = (datetime.utcnow(), zipfile, fsize, Hex.ByteToHex(checksum), files)
         
-        con = sqlite3.connect(join(self.configpath, 'sync.db'))
+        con = sqlite3.connect(join(self.configpath, 'sync.db'), detect_types=sqlite3.PARSE_DECLTYPES)
         c = con.cursor()
         try:
             c.execute(sql, values)

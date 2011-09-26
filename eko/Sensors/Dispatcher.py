@@ -64,7 +64,7 @@ class EkoDispatcher(object):
             logger.info("No files to sync.")
             return
         try:
-            con = sqlite3.connect(join(self.configpath, "filelist.db"))
+            con = sqlite3.connect(join(self.configpath, "filelist.db"), detect_types=sqlite3.PARSE_DECLTYPES)
             c = con.cursor()
             for filename in filenames:
                 x = c.execute("select * from filelist where filename = ? and synctime is NULL", (filename,))
