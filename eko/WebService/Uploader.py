@@ -199,26 +199,26 @@ class DataUploader( object ):
         files = []
         try:
             shutil.copy('/var/log/kernel.log', '/tmp/kernel.log.'+basename)
-            files.append('kernel.log', '/tmp/kernel.log.'+basename)
+            files.append(('kernel.log', '/tmp/kernel.log.'+basename))
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy kernel log.")
         
         try:
-            shutil.copy('/var/log/daemon.log', '/tmp/daemon.log.'+basename)
-            files.append('daemon.log', '/tmp/daemon.log.'+basename)
+            shutil.copy(('/var/log/daemon.log', '/tmp/daemon.log.'+basename)
+            files.append('daemon.log', '/tmp/daemon.log.'+basename))
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy daemon log.")
         
         try:
             shutil.copy('/home/root/eko.log', '/tmp/eko.log.'+basename)
-            files.append('eko.log', '/tmp/eko.log.'+basename)
+            files.append(('eko.log', '/tmp/eko.log.'+basename))
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy eko log.")
         
-        files.append('/home/root/eko.log.1')
-        files.append('/home/root/eko.log.2')
-        files.append('/home/root/eko.log.3')
-        files.append('/home/root/eko.log.4')
+        files.append(('/home/root/eko.log.1','eko.log.1'))
+        files.append(('/home/root/eko.log.2','eko.log.2'))
+        files.append(('/home/root/eko.log.3','eko.log.3'))
+        files.append(('/home/root/eko.log.4','eko.log.4'))
         
         try:
             zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
