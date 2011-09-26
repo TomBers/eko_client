@@ -33,7 +33,7 @@ def upload_data():
     datalogger=DataLogger('/etc/eko/eko.cfg')
     datalogger.upload_data_messages()
     datalogger.upload_kiosk_messages()
-    datalogger.download_server_messages()
+    datalogger._download_server_messages()
     datalogger.upload_logs()
 
 def insert_kiosk_messages():
