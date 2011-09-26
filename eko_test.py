@@ -21,7 +21,7 @@ import eko.SystemInterface.Beagleboard as Beagleboard
 
 from eko.ThirdParty import ping
 
-logger = LogHelper.getLoggerInstance()
+logger = LogHelper.getLoggerInstance(verbose_level=logging.DEBUG)
 logger.setLevel(logging.DEBUG)
 
 dispatch = EkoDispatcher()

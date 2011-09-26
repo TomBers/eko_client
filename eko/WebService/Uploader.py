@@ -144,8 +144,8 @@ class DataUploader( object ):
         if response is not None:
             resp = response.read()
             if resp.lower().strip() == "success":
-                self.logger.info("File upload sucessful!")
-                return pvars['reference']
+                self.logger.info("File upload sucessful! ref: %s." % resp_url.headers['X-eko-challenge'])
+                return resp_url.headers['X-eko-challenge']
             else:
                 self.logger.error("Message from server '%s'." % resp.lower().strip())
                 return False
