@@ -198,7 +198,7 @@ class DataLogger(object):
         self.logger.info("Executing message from server.")
         self.logger.debug("Command is %s." % message)
         try:
-            proc = subprocess.Popen("message", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(message, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except:
             self.logger.exception("Subprocess could not be opened.")
             return False

@@ -159,6 +159,9 @@ class DataLogger(object):
     
     def service_server_messages(self, ignore_sa=False):
         msgs = self._download_server_messages()
+        if not msgs:
+            return False
+            
         for msg in msgs:
             self.logger.debug("Message %s." % str(msg))
             if 'msg_type' not in msg.keys():
@@ -183,7 +186,7 @@ class DataLogger(object):
         self.logger.info("Executing message from server.")
         self.logger.debug("Command is %s." % message)
         try:
-            proc = subprocess.Popen("message", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(message, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except:
             self.logger.exception("Subprocess could not be opened.")
             return False
