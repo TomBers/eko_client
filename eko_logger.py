@@ -146,7 +146,7 @@ class DataLogger(object):
         upd.get_filelist()
         ret = upd.build_zip_file()
         if not ret:
-            self.logger.info("Upload task failed!")
+            self.logger.info("Upload task exited. Error or nothing to sync.")
             return False
         (zipfile, manifest) = ret
         res = upd.upload_file(zipfile, manifest)

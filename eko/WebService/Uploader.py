@@ -45,6 +45,9 @@ class DataUploader( object ):
         basename = datetime.utcnow().strftime('%d%b%y-%H%M%S.sync')
         filename = basename+'.zip'
         manifest = basename+'.lst'
+        if len(self.filelist) == 0:
+            self.logger.info("No files to sync.")
+            return False
         try:
             zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
             for f in [f[1] for f in self.filelist]:
@@ -85,7 +88,7 @@ class DataUploader( object ):
         
         # create post vars for encoding
         pvars = {'kiosk-id': Beagleboard.get_dieid(),
-                'software_version': '1.0.0', 'type':'data', 'reference': uuid1().get_hex()}
+                'software_version': Constants.VERSION, 'type':'data'}
         
         self.logger.debug("Sync variables: %s" % str(pvars))
         # check to see if zipfile exists
@@ -101,8 +104,6 @@ class DataUploader( object ):
         else:
             mf = None
         
-        datagen, headers = multipart_encode(pvars)
-        
         get_target = urllib2.Request(Constants.URLUploadRequest)
         
         try:
@@ -115,6 +116,9 @@ class DataUploader( object ):
             if mf is not None:
                 mf.close()
             return False
+        
+        #pvars['reference'] = resp_url.headers['X-eko-challenge']
+        datagen, headers = multipart_encode(pvars)
         
         headers['X-eko-challenge'] = resp_url.headers['X-eko-challenge']
         headers['X-eko-signature'] = solve_challenge(resp_url.headers['X-eko-challenge'])
@@ -141,7 +145,7 @@ class DataUploader( object ):
             resp = response.read()
             if resp.lower().strip() == "success":
                 self.logger.info("File upload sucessful!")
-                return True
+                return pvars['reference']
             else:
                 self.logger.error("Message from server '%s'." % resp.lower().strip())
                 return False
