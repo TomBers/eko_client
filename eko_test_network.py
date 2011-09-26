@@ -27,4 +27,4 @@ logger = LogHelper.getLoggerInstance()
 logger.setLevel(logging.DEBUG)
 
 datalogger=DataLogger('/etc/eko/eko.cfg')
-datalogger.netsync()
+datalogger.upload_data_messages()

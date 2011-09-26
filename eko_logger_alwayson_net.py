@@ -229,7 +229,7 @@ class DataLogger(object):
             # tell beagle to sleep for 10 mins
             self.logger.info("Sleeping for 600 seconds.")
             try:
-                os.popen('echo 600 > /debug/pm_debug/wakeup_timer_seconds')
+                os.popen('echo 120 > /debug/pm_debug/wakeup_timer_seconds')
                 os.popen('echo mem > /sys/power/state')
             except (IOError, OSError):
                 self.logger.exception("Unable to put system to sleep")
@@ -239,7 +239,7 @@ class DataLogger(object):
             if datetime.utcnow() > nextsync:
                 self.netsync()
                 # next sync is in 6 hours
-                nextsync = datetime.utcnow() + timedelta(hours=6)
+                nextsync = datetime.utcnow() + timedelta(minutes=15)
             td = nextsync - datetime.utcnow()
             self.logger.info("Next internet sync is in %.2f minutes." % (td.seconds/60.0))
             
