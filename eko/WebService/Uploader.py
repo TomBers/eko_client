@@ -198,14 +198,14 @@ class DataUploader( object ):
         manifest = basename+'.lst'
         files = []
         try:
-            shutil.copy('/var/log/kernel.log', '/tmp/kernel.log.'+basename)
-            files.append(('kernel.log', '/tmp/kernel.log.'+basename))
+            shutil.copy('/var/log/kern.log', '/tmp/kern.log.'+basename)
+            files.append(('kern.log', '/tmp/kern.log.'+basename))
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy kernel log.")
         
         try:
-            shutil.copy(('/var/log/daemon.log', '/tmp/daemon.log.'+basename)
-            files.append('daemon.log', '/tmp/daemon.log.'+basename))
+            shutil.copy('/var/log/daemon.log', '/tmp/daemon.log.'+basename)
+            files.append(('daemon.log', '/tmp/daemon.log.'+basename))
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy daemon log.")
         
@@ -215,19 +215,19 @@ class DataUploader( object ):
         except (OSError, IOError, shutil.Error):
             self.logger.exception("Unable to copy eko log.")
         
-        files.append(('/home/root/eko.log.1','eko.log.1'))
-        files.append(('/home/root/eko.log.2','eko.log.2'))
-        files.append(('/home/root/eko.log.3','eko.log.3'))
-        files.append(('/home/root/eko.log.4','eko.log.4'))
+        files.append(('eko.log.1', '/home/root/eko.log.1'))
+        files.append(('eko.log.2', '/home/root/eko.log.2'))
+        files.append(('eko.log.3', '/home/root/eko.log.3'))
+        files.append(('eko.log.4', '/home/root/eko.log.4'))
         
         try:
             zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
-            for name, path in files:
-                if isfile(path):
-                    self.logger.debug("Adding %s to zipfile." % name)
-                    zf.write(name, name)
+            for fname, fpath in files:
+                if isfile(fpath):
+                    self.logger.debug("Adding %s to zipfile." % fname)
+                    zf.write(fpath, fname)
                 else:
-                    self.logger.warn("Data file %s missing." % name)
+                    self.logger.warn("Data file %s missing." % fname)
             zf.close()
             self.logger.info("Files added to zip file %s" % filename)
         except:
