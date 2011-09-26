@@ -32,6 +32,8 @@ import eko.WebService.ServerMessages as SMsgs
 
 from eko.ThirdParty import ping
 
+import subprocess
+
 from datetime import datetime, timedelta
 
 VERSION = '2.0'
@@ -151,10 +153,79 @@ class DataLogger(object):
             return False
         return True
     
-    def download_server_messages(self):
+    def _download_server_messages(self):
         messages = SMsgs.get_messages()
         return messages
     
+    def service_server_messages(self, ignore_sa=False):
+        msgs = self._download_server_messages()
+        for msg in msgs:
+            self.logger.debug("Message %s." % str(msg))
+            if 'msg_type' not in msg.keys():
+                self.logger.warn("No message type specified.")
+                continue
+            if 'msg' not in msg.keys():
+                self.logger.warn("No message specified.")
+                continue
+            if msg['msg_type'] == 'STAYALIVE':
+                if not ignore_sa:
+                    self.stay_alive_routine(msg['msg'])
+            elif msg['msg_type'] == 'CMD':
+                self._exec_process(msg['msg'])
+            elif msg['msg_type'] == 'GIVELOGS':
+                res = self.upload_logs()
+                CMsgs.add_clientmessage("Logs delivered.", res, "Command parser", datetime.utcnow())
+            else:
+                self.logger.warn("Unrecogised command.")
+        return
+        
+    def _exec_process(self,message):
+        self.logger.info("Executing message from server.")
+        self.logger.debug("Command is %s." % message)
+        try:
+            proc = subprocess.Popen("message", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except:
+            self.logger.exception("Subprocess could not be opened.")
+            return False
+        now = datetime.utcnow()
+        start = datetime.utcnow() + timedelta(seconds=240)
+        while now < start:
+            now = datetime.now()
+            if proc.poll() is not None:
+                timeout = 0
+                break;
+            timeout = 1
+        if timeout:
+            self.logger.error("Process timed out.")
+            return False
+        ret_tuple = proc.communicate()
+        self.logger.debug("Command returns: %s." % str(ret_tuple))
+        CMsgs.add_clientmessage("Command Executed:\n%s" % str(ret_tuple), '', "Command Executer", datetime.utcnow())
+        return
+    
+    def stay_alive_routine(self,message_text):
+        self.logger.info("Stay Alive for 30 minutes.")
+        now = datetime.utcnow()
+        stop = now + timedelta(seconds=1800)
+        CMsgs.add_clientmessage("Staying Alive.", '', "Command parser", datetime.utcnow())
+        while now < stop:
+            now = datetime.utcnow()
+            time.sleep(60)
+            try:
+                self.upload_kiosk_messages()
+            except:
+                self.logger.exception("An error occured when uploading messages.")
+            # ignore another call to stay alive
+            try:
+                self.service_server_messages(ignore_sa=True)
+            except:
+                self.logger.exception("An error occured when attempting to fetch new orders.")
+        CMsgs.add_clientmessage("Going to  die.", '', "Command parser", datetime.utcnow())
+        try:
+            self.upload_kiosk_messages()
+        except:
+            self.logger.exception("An error occured when uploading messages.")
+        
     def upload_logs(self):
         upd = Uploader.DataUploader()
         ret = upd.zip_logfiles()
@@ -165,6 +236,7 @@ class DataLogger(object):
         res = upd.upload_file(zipfile, manifest, upload_type="logs")
         if res:
             upd.create_sync_record(zipfile)
+            return res
         else:
             self.disp.control_led('neterr', True)
     
@@ -219,13 +291,28 @@ class DataLogger(object):
         
         ## sync time if need be
         os.popen('ntpdate -t 90 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org')
+        time.sleep(30)
         
         self.disp.control_led('sync', True)
+        try:
+            self.upload_kiosk_messages()
+        except:
+            self.logger.exception("Unable to upload kiosk messages")
+            self.disp.control_led('neterr', True)
+        
+        
         try:
             self.upload_data_messages()
         except:
             self.logger.exception('Network Synchronisation Failed!')
             self.disp.control_led('neterr', True)
+        
+        try:
+            self.service_server_messages()
+        except:
+            self.logger.exception("Unable to get commands from server.")
+        
+        
         self.disp.control_led('sync', False)
         # terminate network
         self.stop_internet()
