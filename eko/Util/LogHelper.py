@@ -1,8 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-
-
 def getLoggerInstance(level=logging.DEBUG, addhandler=True, verbose_level=logging.WARN):
     logger = logging.getLogger('eko')
     logger.setLevel(logging.DEBUG)
@@ -17,3 +15,4 @@ def getLoggerInstance(level=logging.DEBUG, addhandler=True, verbose_level=loggin
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     return logger
+

@@ -32,6 +32,19 @@ def _update_clientmsg_table(ids, configpath=Constants.CONFIGPATH):
     con.close()
     return
 
+def add_clientmessage(message, sessionref, origin, origintime):
+    con = sqlite3.connect(join(Constants.CONFIGPATH, 'sync.db'))
+    c = con.cursor()
+    try:
+        c.execute("INSERT INTO clientmsg (message, sessionref, origin, origintime) VALUES (?, ?, ?, ?)",
+                (message,sessionref, origin, origintime))
+    except sqlite3.Error:
+        logger.exception("Error inserting message: %s to db." % message)
+    con.commit()
+    c.close()
+    con.close()
+    return
+
 def transmit_clientmessages(configpath=Constants.CONFIGPATH):
     # upload
     logger.info("Transmitting client messages to server.")
@@ -48,7 +61,8 @@ def transmit_clientmessages(configpath=Constants.CONFIGPATH):
         con.close()
     
     # bug out if execute failed
-    if rows is None:
+    if (rows is None) or (rows == []):
+        logger.info("No messages to sync.")
         return False
     
     list = []
@@ -79,9 +93,12 @@ def transmit_clientmessages(configpath=Constants.CONFIGPATH):
     except urllib2.URLError:
         logger.exception("Unable to send client messages")
         return False
-    
-    jsonreply = json.loads(resp.read())
-    if jsonreply['error'] != None:
+    try:
+        jsonreply = json.loads(resp.read())
+    except:
+        logger.exception("Could not read reply json.")
+        jsonreply = {'result':'Could not load json'}
+    if jsonreply['result'] != 'Success':
         logger.error("Server replied with error: %s" % str(jsonreply))
         return False
     else:

@@ -61,14 +61,20 @@ def send_heartbeat(url, uptime, rwip='0.0.0.0'):
         logger.info("Transmiting heartbeat.")
         req = urllib2.Request(url, jsstr, headers)
         response = urllib2.urlopen(req)
-        the_page = response.read().lower().strip()
+        the_page = response.read()
     except:
         logger.exception("Transmit failed.")
         return False
-    if the_page == "success":
+    try:
+        jsondict = json.loads(the_page)
+    except:
+        logger.exception('Could not load reply json')
+        jsondict = {'error':'json not loaded'} 
+    if jsondict['result'] == "success":
         logger.info("Heartbeat Success.")
         return True
     else:
+        logger.debug("Response: %s." % the_page)
         logger.info("Sleeping.")
         return False
 

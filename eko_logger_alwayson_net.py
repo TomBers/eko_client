@@ -27,6 +27,8 @@ import eko.SystemInterface.OSTools as OSTools
 import eko.SystemInterface.Beagleboard as Beagleboard
 
 import eko.WebService.Uploader as Uploader
+import eko.WebService.ClientMessages as CMsgs
+import eko.WebService.ServerMessages as SMsgs
 
 from eko.ThirdParty import ping
 
@@ -141,6 +143,18 @@ class DataLogger(object):
         dispatch.dispatch_all()
         self.logger.info("All sensors polled.")
         return
+    
+    def upload_kiosk_messages(self):
+        try:
+            CMsgs.transmit_clientmessages()
+        except:
+            self.logger.exception("Unable to transmit client messages to server.")
+            return False
+        return True
+    
+    def download_server_messages(self):
+        messages = SMsgs.get_messages()
+        return messages
     
     def upload_data_messages(self):
         upd = Uploader.DataUploader()

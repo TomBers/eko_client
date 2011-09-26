@@ -18,6 +18,7 @@ import urllib2
 from uuid import uuid1
 
 import hashlib
+import shutil
 
 
 class DataUploader( object ):
@@ -83,12 +84,12 @@ class DataUploader( object ):
         conn.commit()
         conn.close()
     
-    def upload_file(self, zipfile, manifest):
+    def upload_file(self, zipfile, manifest, upload_type='data'):
         register_openers()
         
         # create post vars for encoding
         pvars = {'kiosk-id': Beagleboard.get_dieid(),
-                'software_version': Constants.VERSION, 'type':'data'}
+                'software_version': Constants.VERSION, 'type': upload_type}
         
         self.logger.debug("Sync variables: %s" % str(pvars))
         # check to see if zipfile exists
@@ -187,3 +188,58 @@ class DataUploader( object ):
             con.commit()
             con.close()
         return
+    
+    def zip_logfiles(self):
+        # get /var/log/kern.log
+        ###   /var/log/daemon.log
+        ###   /home/root/eko.log.1-9
+        basename = datetime.utcnow().strftime('%d%b%y-%H%M%S.log')
+        filename = basename+'.zip'
+        manifest = basename+'.lst'
+        files = []
+        try:
+            shutil.copy('/var/log/kernel.log', '/tmp/kernel.log.'+basename)
+            files.append('kernel.log', '/tmp/kernel.log.'+basename)
+        except (OSError, IOError, shutil.Error):
+            self.logger.exception("Unable to copy kernel log.")
+        
+        try:
+            shutil.copy('/var/log/daemon.log', '/tmp/daemon.log.'+basename)
+            files.append('daemon.log', '/tmp/daemon.log.'+basename)
+        except (OSError, IOError, shutil.Error):
+            self.logger.exception("Unable to copy daemon log.")
+        
+        try:
+            shutil.copy('/home/root/eko.log', '/tmp/eko.log.'+basename)
+            files.append('eko.log', '/tmp/eko.log.'+basename)
+        except (OSError, IOError, shutil.Error):
+            self.logger.exception("Unable to copy eko log.")
+        
+        files.append('/home/root/eko.log.1')
+        files.append('/home/root/eko.log.2')
+        files.append('/home/root/eko.log.3')
+        files.append('/home/root/eko.log.4')
+        
+        try:
+            zf = ZipFile(join(self.zippath, filename), 'w', ZIP_DEFLATED)
+            for name, path in files:
+                if isfile(path):
+                    self.logger.debug("Adding %s to zipfile." % name)
+                    zf.write(name, name)
+                else:
+                    self.logger.warn("Data file %s missing." % name)
+            zf.close()
+            self.logger.info("Files added to zip file %s" % filename)
+        except:
+            self.logger.exception("Could not create zip file.")
+            return False
+        try:
+            fh = open(join(self.zippath, manifest), 'wb')
+            for name, path in files:
+                fh.write('%s\n' % path)
+            fh.close()
+        except:
+            self.logger.exception("An error occured while trying to write the manifest.")
+        return (join(self.zippath, filename), join(self.zippath, manifest))
+        
+        
