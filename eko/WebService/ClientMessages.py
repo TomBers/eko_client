@@ -52,7 +52,7 @@ def transmit_clientmessages(configpath=Constants.CONFIGPATH):
     con = sqlite3.connect(join(configpath, 'sync.db'))
     c = con.cursor()
     try:
-        c.execute("SELECT message, sessionref, origin, origintime FROM clientmsg WHERE synctime is NULL LIMIT 15")
+        c.execute("SELECT message, sessionref, origin, origintime, id FROM clientmsg WHERE synctime is NULL LIMIT 15")
         rows = c.fetchall()
     except sqlite3.Error:
         logger.exception("Error fetching rows from sync.db.")
@@ -107,5 +107,5 @@ def transmit_clientmessages(configpath=Constants.CONFIGPATH):
         return False
     else:
         logger.info("Succesfully uploaded messages.")
-        _update_clientmsg_table([row[0] for row in rows])
+        _update_clientmsg_table([row[4] for row in rows])
         return True
