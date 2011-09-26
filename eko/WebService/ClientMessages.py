@@ -17,10 +17,11 @@ import eko.Util.Security as Security
 
 import logging
 
-logger = logging.getLogger('eko.webservice.clientmsg')
+logger = logging.getLogger('eko.webservice.clientmessages')
 
 def _update_clientmsg_table(ids, configpath=Constants.CONFIGPATH):
     con = sqlite3.connect(join(configpath, 'sync.db'))
+    logger.debug("Updating records with ids: %s" % ("".join(["%s " % i for i in ids])))
     c = con.cursor()
     for id in ids:
         try:
@@ -94,13 +95,17 @@ def transmit_clientmessages(configpath=Constants.CONFIGPATH):
         logger.exception("Unable to send client messages")
         return False
     try:
-        jsonreply = json.loads(resp.read())
+        resp_str = resp.read()
+        jsonreply = json.loads(resp_str)
+        logger.debug("JSON reply reads: %s" % resp_str)
     except:
         logger.exception("Could not read reply json.")
         jsonreply = {'result':'Could not load json'}
-    if jsonreply['result'] != 'Success':
+    
+    if jsonreply['result'].lower().strip() != 'success':
         logger.error("Server replied with error: %s" % str(jsonreply))
         return False
     else:
+        logger.info("Succesfully uploaded messages.")
         _update_clientmsg_table([row[0] for row in rows])
         return True
