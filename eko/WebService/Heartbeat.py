@@ -90,7 +90,7 @@ def main():
         if pppdstatus:
             heartbeat_int = 30.0
         else:
-            heartbeat_int = 120.0
+            heartbeat_int = 60.0
         if pppdstatus:
             try:
                 rwip = OSTools.net_get_ip_address('ppp0')
