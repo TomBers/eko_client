@@ -1,0 +1,41 @@
+# This peer file is known to work with MTN sim cards over 3G within Kigali
+# We have had no success in remote villages like Batima or Minazi
+
+# The peer script is called "advanced" because it disables a lot of extra options and also increases the retry counts.
+
+# usbserial device, some options:
+/dev/{=USBDevice}
+460800
+idle 7200
+lock
+crtscts
+modem
+noauth
+# dns, routing
+usepeerdns
+replacedefaultroute
+defaultroute
+noipdefault
+noccp
+nobsdcomp
+novj
+# usually doesnt matter for GPRS/UMTS connections:
+user "{=username}"
+password "{=password}"
+# Might not be needed
+{?lcpRetryStuff
+lcp-echo-interval 30
+lcp-echo-failure 4
+lcp-restart 10
+lcp-max-terminate 10
+lcp-max-configure 70
+lcp-max-failure 50}
+{?ipcpRetryStuff
+ipcp-restart 8
+ipcp-max-configure 50
+ipcp-accept-local
+ipcp-accept-remote
+}
+debug
+# connect script
+connect "/usr/sbin/{=chatexec}"

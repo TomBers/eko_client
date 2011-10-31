@@ -1,0 +1,5 @@
+/dev/{=USBDevice} 460800
+connect '/usr/sbin/chat -v -f /etc/chatscripts/{=chatfile}'
+defaultroute
+noauth 
+user "{=username}"
