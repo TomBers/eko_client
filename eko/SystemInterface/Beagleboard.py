@@ -157,6 +157,20 @@ def turn_on_usbhub():
     # check /dev/ttyUSB0
     time.sleep(5)
     
+    ## Check to see if we have a mf112 connected
+    try:
+        (ret, err) = OSTools.polling_popen(['lsusb'], 2.0)
+        lines = ret.strip().split('\n')
+        for line in lines:
+            sects = line.split(' ')
+            if len(sects) > 6:
+                if sects[5] == "19d2:0103":
+                    os.popen('usb_modeswitch -v 0x19d2 -p 0x0103 -V 19d2 -P 0x0031 -M 5553424312345679000000000000061b000000020000000000000000000000')
+                    logger.info("MF112 detected, running modeswitch")
+                    time.sleep(10)
+    except:
+        logger.exception("Unable to check usb devices")
+    
     #### REMOVE!
     #time.sleep(5)
     #os.popen('usb_modeswitch -v 0x19d2 -p 0x0103 -V 19d2 -P 0x0031 -M 5553424312345679000000000000061b000000020000000000000000000000')
