@@ -2,9 +2,10 @@ from ovotemplate import Ovotemplate
 import sys
 import os
 from os import path
+import stat
 
 CHATDIR = "build/etc/chatscripts/"
-PEERDIR = "build/etc/ppp/peer/"
+PEERDIR = "build/etc/ppp/peers/"
 SHDIR = "build/usr/sbin/"
 
 def main(modem, operator, apn, username, password="", level="0"):
@@ -77,6 +78,7 @@ def build_huawei_scripts(dict):
     build_template(tpl_callchat, CHATDIR + dict['chatfile_post'], dict)
     build_template(tpl_peer, PEERDIR + dict['peerfile'], dict)
     build_template(tpl_shscript, SHDIR + dict['chatexec'], dict)
+    os.chmod(SHDIR + dict['chatexec'], 0754)
     print "All tasks done."
 
 def build_zte_scripts(dict):
@@ -92,6 +94,7 @@ def build_zte_scripts(dict):
     f = open('huawei_e220/scripts/he220_chatexec.sh', 'rb')
     tpl_shscript = f.read()
     f.close()
+    os.chmod('huawei_e220/scripts/he220_chatexec.sh', 0754)
     
     print "!! Levels have no effect for this modem."
     
