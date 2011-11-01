@@ -22,6 +22,46 @@ def get_dieid():
     else:
         return 'FAILSAFE'
 
+def export_gpio(gpio):
+    if exists('/sys/class/gpio/gpio%s' % str(gpio)):
+        return
+    fh = open('/sys/class/gpio/export', 'wb')
+    fh.write(str(gpio))
+    fh.close()
+    
+def unexport_gpio(gpio):
+    if not exists('/sys/class/gpio/gpio%s' % str(gpio)):
+        return
+    fh = open('/sys/class/gpio/unexport', 'wb')
+    fh.write(str(gpio))
+    fh.close()
+
+def read_gpio(gpio):
+    fh = open('/sys/class/gpio/gpio%s/value' % str(gpio), 'rb')
+    x = fh.read(1)
+    fh.close(0)
+    return x.strip()
+
+def get_board_revision():
+    # first export GPIO171-173
+    export_gpio(171)
+    export_gpio(172)
+    export_gpio(173)
+    
+    # read the status of gpio 171-173
+    gpio171 = int(read_gpio(171))
+    gpio172 = int(read_gpio(172))
+    gpio173 = int(read_gpio(173))
+    
+    # unexport gpio pins 171-173
+    unexport_gpio(171)
+    unexport_gpio(172)
+    unexport_gpio(173)
+    
+    board_id = gpio173 << 2 | gpio172 << 1 | gpio171
+    
+    return board_id
+
 def handle_modprobe_ehcihcd(insert=True):
     if insert:
         command = 'modprobe'
@@ -80,7 +120,12 @@ def ehci_hcd_loaded():
 #TODO: CHANGE FOR REVC!!!
 def set_gpio_usbhub_power(on=True, revB=False):
     retry_count = 5
-    
+    try:
+        boardrev = get_board_revision()
+        if boardrev == 0:
+            revB = True
+    except:
+        logger.exception("Unable to read gpio pins to detect board type!")
     if not revB:
         gpio_val = "0" if on else "1"
     else:

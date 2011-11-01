@@ -213,7 +213,7 @@ class DataLogger(object):
         CMsgs.add_clientmessage("Staying Alive.", '', "Command parser", datetime.utcnow())
         while now < stop:
             now = datetime.utcnow()
-            time.sleep(60)
+            time.sleep(20)
             try:
                 self.upload_kiosk_messages()
             except:
@@ -379,6 +379,11 @@ def main():
     loglvl_console = logging.DEBUG if options.debug else logging.INFO
     
     logger = LogHelper.getLoggerInstance(verbose_level=loglvl_console)
+    try:
+        board_rev = Beagleboard.get_board_revision()
+        logger.info("Beagleboard Revision 0x%02x" % board_rev)
+    except:
+        logger.exception("Unable to test board revision, defaulting to XM rev C")
     
     # create datalogger instance and run it
     while True:
