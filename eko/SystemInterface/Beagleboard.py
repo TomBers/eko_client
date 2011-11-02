@@ -39,7 +39,7 @@ def unexport_gpio(gpio):
 def read_gpio(gpio):
     fh = open('/sys/class/gpio/gpio%s/value' % str(gpio), 'rb')
     x = fh.read(1)
-    fh.close(0)
+    fh.close()
     return x.strip()
 
 def get_board_revision():
