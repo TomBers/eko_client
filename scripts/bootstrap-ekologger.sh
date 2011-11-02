@@ -52,7 +52,8 @@ if [ $TEST_MODE -eq 1 ] ; then
     modprobe ehci_hcd
     echo "Entering test mode!"
     sleep 10
-    ifconfig usb0 192.168.1.100 netmask 255.255.255.0
+    ifconfig usb0 192.168.1.100
+    echo "Network waiting on 192.168.1.100"
     route add default gw 192.168.1.1
     echo "Network Up. Now blocking indefinitely."
     SECONDS=0
@@ -70,8 +71,5 @@ if [ $TEST_MODE -eq 1 ] ; then
     done
 else
     echo "Launching scripts"
-    while [ 1 -eq 1 ] ; do
-        echo "Me is launching :P"
-        break
-    done
+    /usr/bin/python /home/root/eko_client/eko_logger.py
 fi
