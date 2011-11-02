@@ -48,10 +48,12 @@ done
 
 if [ $TEST_MODE -eq 1 ] ; then
     i2cset -y -m 0xF8 2 0x20 0x09 0x0F
+    echo 0 > /sys/class/gpio/gpio210/value
+    sleep 2
     # bring the usb hub up
     modprobe ehci_hcd
+    sleep 60
     echo "Entering test mode!"
-    sleep 10
     ifconfig usb0 192.168.1.100
     echo "Network waiting on 192.168.1.100"
     route add default gw 192.168.1.1
